@@ -1,8 +1,8 @@
 object MainOpt: TMainOpt
-  Left = 215
-  Top = 223
+  Left = 1340
+  Top = 210
   Width = 888
-  Height = 604
+  Height = 628
   Caption = 'Opt Trajectory NEP'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -21,8 +21,8 @@ object MainOpt: TMainOpt
     Left = 0
     Top = 0
     Width = 872
-    Height = 565
-    ActivePage = tsBP
+    Height = 589
+    ActivePage = tsResult
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
@@ -262,7 +262,7 @@ object MainOpt: TMainOpt
         Left = 16
         Top = 272
         Width = 377
-        Height = 249
+        Height = 273
         Caption = 'Spacecraft Characteristics'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -363,7 +363,7 @@ object MainOpt: TMainOpt
         Left = 432
         Top = 272
         Width = 377
-        Height = 249
+        Height = 273
         Caption = 'Integration Parameters'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -413,7 +413,7 @@ object MainOpt: TMainOpt
         end
         object lblTF: TLabel
           Left = 14
-          Top = 120
+          Top = 128
           Width = 250
           Height = 13
           Caption = 'Flight time, days ____________________________'
@@ -426,7 +426,7 @@ object MainOpt: TMainOpt
         end
         object lblh: TLabel
           Left = 14
-          Top = 154
+          Top = 170
           Width = 276
           Height = 13
           Caption = 'Integration step, days____________________________'
@@ -439,7 +439,20 @@ object MainOpt: TMainOpt
         end
         object lblh_br: TLabel
           Left = 259
-          Top = 170
+          Top = 186
+          Width = 16
+          Height = 13
+          Caption = '0.5'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblTF_br: TLabel
+          Left = 259
+          Top = 145
           Width = 16
           Height = 13
           Caption = '0.5'
@@ -476,6 +489,7 @@ object MainOpt: TMainOpt
           end
         end
         object edtPvr: TEdit
+          Tag = 1
           Left = 257
           Top = 16
           Width = 81
@@ -488,10 +502,12 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 0
           Text = '0'
+          OnChange = edtChange
           OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtPvu: TEdit
+          Tag = 2
           Left = 257
           Top = 47
           Width = 81
@@ -504,12 +520,14 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 1
           Text = '0'
+          OnChange = edtChange
           OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtTF: TEdit
+          Tag = 3
           Left = 257
-          Top = 112
+          Top = 120
           Width = 81
           Height = 21
           Font.Charset = DEFAULT_CHARSET
@@ -520,12 +538,14 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 3
           Text = '475'
+          OnChange = edtChange
           OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edth: TEdit
+          Tag = 4
           Left = 257
-          Top = 146
+          Top = 162
           Width = 81
           Height = 21
           Font.Charset = DEFAULT_CHARSET
@@ -536,13 +556,13 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 4
           Text = '1'
-          OnChange = edthChange
+          OnChange = edtChange
           OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object btnInteg: TButton
           Left = 48
-          Top = 184
+          Top = 200
           Width = 139
           Height = 33
           Caption = 'Calculate Trajectory'
@@ -551,7 +571,7 @@ object MainOpt: TMainOpt
         end
         object btnIntStop: TButton
           Left = 224
-          Top = 184
+          Top = 200
           Width = 75
           Height = 33
           Caption = 'Halt'
@@ -561,7 +581,7 @@ object MainOpt: TMainOpt
         end
         object pbInteg: TProgressBar
           Left = 16
-          Top = 224
+          Top = 240
           Width = 321
           Height = 17
           Max = 60
@@ -576,8 +596,8 @@ object MainOpt: TMainOpt
         Left = 0
         Top = 24
         Width = 857
-        Height = 505
-        ActivePage = tsTable
+        Height = 529
+        ActivePage = tsCharts
         Align = alCustom
         TabOrder = 1
         object tsTable: TTabSheet
@@ -586,7 +606,7 @@ object MainOpt: TMainOpt
             Left = 0
             Top = 0
             Width = 849
-            Height = 477
+            Height = 501
             Align = alClient
             ColCount = 9
             DefaultColWidth = 90
@@ -750,6 +770,15 @@ object MainOpt: TMainOpt
               Caption = 'Save'
               TabOrder = 9
             end
+            object btnZoomCht: TButton
+              Left = 176
+              Top = 104
+              Width = 75
+              Height = 25
+              Caption = 'btnZoomCht'
+              TabOrder = 10
+              OnClick = btnZoomChtClick
+            end
           end
           object chtMain: TChart
             Left = 8
@@ -854,6 +883,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 0
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtc2: TEdit
@@ -863,6 +893,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 1
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtc3: TEdit
@@ -872,6 +903,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 2
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtd1: TEdit
@@ -881,6 +913,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 3
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtd2: TEdit
@@ -890,6 +923,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 4
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtd3: TEdit
@@ -899,6 +933,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 5
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtac1: TEdit
@@ -908,6 +943,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 6
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtac2: TEdit
@@ -917,6 +953,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 7
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtac3: TEdit
@@ -926,6 +963,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 8
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtdl1: TEdit
@@ -935,6 +973,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 9
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtdl2: TEdit
@@ -944,6 +983,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 10
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
         object edtdl3: TEdit
@@ -953,6 +993,7 @@ object MainOpt: TMainOpt
           Height = 21
           TabOrder = 11
           Text = '1'
+          OnExit = NumEditExit
           OnKeyPress = NumValuesInput
         end
       end
@@ -960,7 +1001,7 @@ object MainOpt: TMainOpt
         Left = 8
         Top = 400
         Width = 841
-        Height = 129
+        Height = 153
         Caption = 'Results of Newton method calculation'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -972,11 +1013,12 @@ object MainOpt: TMainOpt
         object lblMemo: TLabel
           Left = 8
           Top = 16
-          Width = 523
+          Width = 615
           Height = 16
           Caption = 
-            '    Tf               Pvr             Pvu               f(Tf)    ' +
-            '      f(Pvr)              f(Pvu)            F_summ'
+            '    Tf                      Pvr                     Pvu         ' +
+            '          f(Tf)                f(Pvr)            f(Pvu)         ' +
+            '   F_summ'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -13
@@ -988,7 +1030,7 @@ object MainOpt: TMainOpt
           Left = 0
           Top = 40
           Width = 841
-          Height = 89
+          Height = 113
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1136,7 +1178,8 @@ object MainOpt: TMainOpt
           LabelPosition = lpLeft
           ParentFont = False
           TabOrder = 0
-          OnKeyPress = NumValuesInput
+          OnExit = lbledtExit
+          OnKeyPress = lbledtKeyPress
         end
         object lbledtPvrP: TLabeledEdit
           Left = 57
@@ -1161,7 +1204,8 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 1
           Text = '1'
-          OnKeyPress = NumValuesInput
+          OnExit = lbledtExit
+          OnKeyPress = lbledtKeyPress
         end
         object lbledtPvuP: TLabeledEdit
           Left = 57
@@ -1186,7 +1230,8 @@ object MainOpt: TMainOpt
           ParentFont = False
           TabOrder = 2
           Text = '1'
-          OnKeyPress = NumValuesInput
+          OnExit = lbledtExit
+          OnKeyPress = lbledtKeyPress
         end
       end
       object grpError: TGroupBox
@@ -1223,8 +1268,9 @@ object MainOpt: TMainOpt
           Font.Style = []
           LabelPosition = lpLeft
           ParentFont = False
+          ReadOnly = True
           TabOrder = 0
-          OnKeyPress = NumValuesInput
+          OnKeyPress = lbledtKeyPress
         end
         object lbledtPvrE: TLabeledEdit
           Left = 59
@@ -1247,8 +1293,9 @@ object MainOpt: TMainOpt
           Font.Style = []
           LabelPosition = lpLeft
           ParentFont = False
+          ReadOnly = True
           TabOrder = 1
-          OnKeyPress = NumValuesInput
+          OnKeyPress = lbledtKeyPress
         end
         object lbledtPvuE: TLabeledEdit
           Left = 59
@@ -1271,8 +1318,9 @@ object MainOpt: TMainOpt
           Font.Style = []
           LabelPosition = lpLeft
           ParentFont = False
+          ReadOnly = True
           TabOrder = 2
-          OnKeyPress = NumValuesInput
+          OnKeyPress = lbledtKeyPress
         end
       end
       object btnChClear: TButton

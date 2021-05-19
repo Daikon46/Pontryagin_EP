@@ -121,6 +121,8 @@ type
     btnPause: TButton;
     btnPontSave: TButton;
     btPontLoad: TButton;
+    lblTF_br: TLabel;
+    btnZoomCht: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -128,9 +130,12 @@ type
     procedure NumEditExit(Sender: TObject);
     procedure btnIntegClick(Sender: TObject);
     procedure btnIntStopClick(Sender: TObject);
-    procedure edthChange(Sender: TObject);
+    procedure edtChange(Sender: TObject);
     procedure btnChartClick(Sender: TObject);
     procedure btnChClearClick(Sender: TObject);
+    procedure lbledtKeyPress(Sender: TObject; var Key: Char);
+    procedure lbledtExit(Sender: TObject);
+    procedure btnZoomChtClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -210,9 +215,6 @@ implementation
 //--------------------------------------------------------------
 
 procedure TMainOpt.btnIntegClick(Sender: TObject);
-
-var
-  i : Integer;
   
 begin
 // Switch buttons
@@ -354,7 +356,12 @@ begin
         end;
 
       FillGrid(i_step);
-      MainOpt.btnChartClick(WorkThread);  
+      MainOpt.btnChartClick(WorkThread);
+      MainOpt.edtPvr.Text := MainOpt.lbledtPvrP.Text;
+      MainOpt.edtPvu.Text := MainOpt.lbledtPvuP.Text;
+      MainOpt.edtTF.Text  := FloatToStrF(StrToFloat(MainOpt.lbledtTimeP.Text)*t_b_r,
+                                               fffixed, 6,2);
+      MainOpt.lblTF_br.Caption  := MainOpt.lbledtTimeP.Text;
     end;
 
   MainOpt.btnInteg.Enabled := True;
@@ -582,8 +589,8 @@ end;
 procedure TMainOpt.FormCreate(Sender: TObject);
 begin
   // Set the ScrollBar
-  HorzScrollBar.Range := 860; // set the range to an higher number
-  VertScrollBar.Range := 550; // set the range to an higher number
+  HorzScrollBar.Range := 870; // set the range to an higher number
+  VertScrollBar.Range := 580; // set the range to an higher number
   ShowScrollBar(Handle, SB_BOTH, True);
   // input Initial Data
   edtOmega0.Text := FloatToStr(0);     // deg
@@ -599,9 +606,9 @@ begin
   edtSpImp.Text  := FloatToStr(60000);              // s
   edtThrust.Text := FloatToStr(1.71976E-4*100E+3);  // N
   // integration Data
-  rbPrNeg.Checked:= True;
-  edtPvr.Text    := FloatToStr(0);
-  edtPvu.Text    := FloatToStr(0);
+  rbPrPos.Checked:= True;
+  edtPvr.Text    := FloatToStr(1);
+  edtPvu.Text    := FloatToStr(1);
   edtTF.Text     := FloatToStr(475);   // days
   edth.Text      := FloatToStr(0.5);   // days
   t_b_r  := Rz*sqrt(Rz/mu)/3600/24;
@@ -610,6 +617,9 @@ begin
   a_r_b  := 1/a_b_r;
   lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
                                 fffixed, 3,6) + ' dimensionless';
+  lblTF_br.Caption := FloatToStrF(StrToFloat(edtTF.Text)*t_r_b,
+                                fffixed, 3,6) + ' dimensionless';
+  Pontryagin := False;
   // Prepare table for Results
   strgrResults.RowCount         := 2;
   strgrResults.ColCount         := 10;
@@ -626,9 +636,9 @@ begin
   strgrResults.Cells[8,0]       := 'PVu';
   strgrResults.Cells[9,0]       := 'Lambda,deg';
   // Data for boundary problem solver
-  lbledtTimeP.Text := FloatToStr(475*t_r_b);
-  lbledtPvrP.Text  := FloatToStr(1);
-  lbledtPvuP.Text  := FloatToStr(1);
+  lbledtTimeP.Text := FloatToStrF(StrToFloat(edtTF.Text)*t_r_b, fffixed, 3,6);
+  lbledtPvrP.Text  := edtPvr.Text;
+  lbledtPvuP.Text  := edtPvu.Text;
   edtac1.Text := FloatToStr(0.0001);
   edtac2.Text := FloatToStr(0.0001);
   edtac3.Text := FloatToStr(0.0001);
@@ -665,8 +675,9 @@ begin
   //Key - символ, соответствующий нажатой клавише.
   //DecimalSeparator - содержит текующий разделитель дробной и целой части.
   case Key of
-    '0'..'9', '+', '-', 'e', 'E' :;
-    #8       :; // Back Space
+    '0'..'9', '+', '-', 'e', 'E' : ;
+    #3, #22  : ; // CTRL+C and CTRL+V
+    #8       : ; // Back Space
     '.', ',' : if pos(DecimalSeparator, (Sender as TEdit).Text)=0 then
                 key := DecimalSeparator
                else
@@ -716,16 +727,34 @@ begin
       pgcMain.ActivePageIndex    := 1;
       pgcResults.ActivePageIndex := 0;
     end;
+  Pontryagin := False;
 end;
 
 // Convert integration step into dimensionless value
-procedure TMainOpt.edthChange(Sender: TObject);
+procedure TMainOpt.edtChange(Sender: TObject);
 begin
   try
-    lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
-                        fffixed, 3,6) + ' dimensionless';
+    if not Pontryagin then
+      begin
+        case TComponent(Sender).Tag of
+          1 :
+            lbledtPvrP.Text  := edtPvr.Text;
+          2 :
+            lbledtPvuP.Text  := edtPvu.Text;
+
+          3 :
+            begin
+              lbledtTimeP.Text  := FloatToStrF(StrToFloat(edtTF.Text)*t_r_b,
+                                              fffixed, 3,6);
+              lblTF_br.Caption  := lbledtTimeP.Text + ' dimensionless';
+            end;
+          4 :
+            lblh_br.Caption  := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
+                                            fffixed, 3,6) + ' dimensionless';
+        end;
+      end
   except
-    (Sender as TEdit).SetFocus;
+      (Sender as TEdit).SetFocus;
   end;
 end;
 
@@ -825,6 +854,53 @@ begin
       MainOpt.cht3.Series[0].Clear;  //очищаем графики
       MainOpt.cht3.Series[0].XValues.Order:=loNone;
       MainOpt.cht3.Series[0].YValues.Order:=loNone;
+end;
+
+// LabelEdit inputhandler
+procedure TMainOpt.lbledtKeyPress(Sender: TObject; var Key: Char);
+begin
+begin
+  //Key - символ, соответствующий нажатой клавише.
+  //DecimalSeparator - содержит текующий разделитель дробной и целой части.
+  case Key of
+    '0'..'9', '+', '-', 'e', 'E' : ;
+    #3, #22  : ; // CTRL+C and CTRL+V
+    #8       : ; // Back Space
+    '.', ',' : if pos(DecimalSeparator, (Sender as TLabeledEdit).Text)=0 then
+                key := DecimalSeparator
+               else
+                key := #0;
+    #13      :
+               begin
+                 If HiWord(GetKeyState(VK_SHIFT)) <> 0 then
+                   SelectNext(Sender as TWinControl,False,True)
+                 else
+                   SelectNext(Sender as TWinControl,True,True) ;
+                 Key := #0
+               end;
+    #27      : key := #0;
+  else Key := chr(0);  //не отображать остальные символы.
+  end;
+end;
+end;
+
+// Labeled Edit exit handler
+procedure TMainOpt.lbledtExit(Sender: TObject);
+begin
+  try
+    StrToFloat((Sender as TlabeledEdit).Text);
+    if Sender = edth then lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
+                                                        fffixed, 3,6) + ' dimensionless';
+  except
+    (Sender as TLabeledEdit).SetFocus;
+    Beep;
+  end;
+end;
+
+procedure TMainOpt.btnZoomChtClick(Sender: TObject);
+begin
+//  ChtMain.AutoSize := False;
+  ChtMain.ZoomPercent( 75 );
 end;
 
 end.
