@@ -1,6 +1,6 @@
 object MainOpt: TMainOpt
-  Left = 1340
-  Top = 210
+  Left = 144
+  Top = 189
   Width = 888
   Height = 628
   Caption = 'Opt Trajectory NEP'
@@ -12,7 +12,7 @@ object MainOpt: TMainOpt
   Font.Style = []
   KeyPreview = True
   OldCreateOrder = False
-  Position = poMainFormCenter
+  Position = poScreenCenter
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   PixelsPerInch = 96
