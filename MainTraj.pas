@@ -174,7 +174,8 @@ var
   WorkThread: TWorkThread;
   r, u, Vr, Vu, time, ac, lamb, // текущее состояние системы
   Pr, Pvr, Pvu,                 // текущие значения сопр. переменных
-  omega, ex, sma, p,            // текущие значения оскулирующих элементов
+  omega0, ex0, sma0, p0,        // initial orbit
+  omegaF, exF, smaF, pF,        // target orbit
   r0, u0, Vr0, Vu0, time0,      // initial system state
   Pr0, Pvr0, Pvu0,              // initial costates value
   r_f, u_f, Vr_f, Vu_f,         // target system state
@@ -215,7 +216,7 @@ implementation
 //--------------------------------------------------------------
 
 procedure TMainOpt.btnIntegClick(Sender: TObject);
-  
+
 begin
 // Switch buttons
   btnInteg.Enabled := False;
@@ -223,19 +224,24 @@ begin
   btnPontCalc.Enabled := False;
   btnPause.Enabled := True;
 // initial data gathering
-  ex    := StrToFloat(edte0.Text);
-  omega := StrToFloat(edtOmega0.Text) * PI/180;  // rad
-  sma   := StrToFloat(edtsma0.Text);             // AU
+  ex0    := StrToFloat(edte0.Text);
+  omega0 := StrToFloat(edtOmega0.Text) * PI/180;  // rad
+  sma0   := StrToFloat(edtsma0.Text);             // AU
   u0    := StrToFloat(edtu0.Text) * PI/180;      // rad
-  p     := sma*(1-sqr(ex));
-  r0    := p / (1+ex*cos(u-omega));              // r, AU
-  Vr0   := 1 / sqrt(p) * ex*sin(u-omega);        // Vr, dim
-  Vu0   := 1 / sqrt(p) * (1+ex*cos(u-omega));    // Vu, dim
+  p0     := sma0*(1-sqr(ex0));
+  r0    := p0 / (1+ex0*cos(u-omega0));              // r, AU
+  Vr0   := 1 / sqrt(p0) * ex0*sin(u-omega0);        // Vr, dim
+  Vu0   := 1 / sqrt(p0) * (1+ex0*cos(u-omega0));    // Vu, dim
   Time0 := 0;                                    // Time, dim
   if rbPrNeg.Checked then Pr0 := -1
   else Pr0 := 1;
   Pvr0  := StrToFloat(edtPvr.Text);
   Pvu0  := StrToFloat(edtPvu.Text);
+// target orbit data gathering
+  exF    := StrToFloat(edteF.Text);
+  omegaF := StrToFloat(edtOmegaF.Text) * PI/180;  // rad
+  smaF   := StrToFloat(edtsmaF.Text);             // AU
+  pF     := smaF*(1-sqr(exF));
 // initial data for integration gathering
   i_step := 0;
   TF    := StrToFloat(edtTF.Text) * t_r_b;       // dim
@@ -262,11 +268,6 @@ begin
 // calculation to solve boundary problem
     begin
       Pontryagin := True;
-    // calculation of target orbit
-      ex    := StrToFloat(edteF.Text);
-      omega := StrToFloat(edtOmegaF.Text) * PI/180;  // rad
-      sma   := StrToFloat(edtsmaF.Text);             // AU
-      p     := sma*(1-sqr(ex));
     // Prepeare interface
       btnChClearClick(Sender as TButton);
     end;
@@ -378,7 +379,7 @@ Procedure PRfull (var y1, d1; n: word); far;
  { Пpавые части для межпланетных пеpелетов с полным набоpом
    фазовых кооpдинат, упpавлений и сопpяженных множителей.
    Интегpиpование по времени. }
-   
+
 Var
      y: array[1..MaxNumVector] of float absolute y1;
      d: array[1..MaxNumVector] of float absolute d1;
@@ -393,7 +394,6 @@ begin
    Pr    := y[6];
    Pvr   := y[7];
    Pvu   := y[8];
-//   ac    := 0;
    lamb  := ArcCos(Pvr / sqrt(Pvr*Pvr + 1));
    S     := ac*cos(lamb); // along Vr
    T     := ac*sin(lamb); // along Vu
@@ -468,9 +468,9 @@ begin
   rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
 
   u_f := Results[High(Results), 3];                  // u, rad
-  r_f   := p / (1+ex*cos(u_f - omega));              // r, AU
-  Vr_f  := 1 / sqrt(p) * ex*sin(u_f - omega);        // Vr, dim
-  Vu_f  := 1 / sqrt(p) * (1+ex*cos(u_f - omega));    // Vu, dim
+  r_f   := pF / (1+exF*cos(u_f - omegaF));              // r, AU
+  Vr_f  := 1 / sqrt(pF) * exF*sin(u_f - omegaF);        // Vr, dim
+  Vu_f  := 1 / sqrt(pF) * (1+exF*cos(u_f - omegaF));    // Vu, dim
 
   f[1] := Results[High(Results), 2] - r_f;
   f[2] := Results[High(Results), 4] - Vr_f;
@@ -526,10 +526,11 @@ var x:   Xtype absolute x1;
 
 begin
    for ii := 1 to n do for j := 1 to 4 do y[ii,j] := ym [(ii-1)*4+j];
-   f_summ := y[1,1]*abs(f[1])+y[2,1]*abs(f[2])+y[3,1]*abs(f[3]);                                              {*}
+   f_summ := y[1,1]*abs(f[1])+y[2,1]*abs(f[2])+y[3,1]*abs(f[3]);   
    FillEdit;
    FillMemo;
    for ii := 1 to n do for j := 1 to 4 do ym[(ii-1)*4+j] := y[ii,j];
+   // Draw charts
    MainOpt.cht1.Series[0].AddXY(x[1], f_summ);
    MainOpt.cht1.Series[0].Active := true;
    MainOpt.cht2.Series[0].AddXY(x[2], f_summ);
@@ -538,7 +539,6 @@ begin
    MainOpt.cht3.Series[0].Active := true;
    MainOpt.lblAlert.Color:=clLime;
    MainOpt.Repaint;
-
    // Halt of the calculation
    if WorkThread.Terminated then m := 0;
 end;
@@ -588,14 +588,15 @@ end;
 // Setting up the form
 procedure TMainOpt.FormCreate(Sender: TObject);
 begin
+  pgcMain.ActivePageIndex := 0;
   // Set the ScrollBar
   HorzScrollBar.Range := 870; // set the range to an higher number
   VertScrollBar.Range := 580; // set the range to an higher number
   ShowScrollBar(Handle, SB_BOTH, True);
   // input Initial Data
-  edtOmega0.Text := FloatToStr(0);     // deg
-  edte0.Text     := FloatToStr(0);
-  edtsma0.Text   := FloatToStr(1);     // AU
+  edtOmega0.Text := FloatToStr(288.1);     // deg
+  edte0.Text     := FloatToStr(0.0167086);
+  edtsma0.Text   := FloatToStr(1.000001018);     // AU
   edtu0.Text     := FloatToStr(0);     // deg
   // input target Data
   edtOmegaF.Text := FloatToStr(0);     // deg
@@ -764,6 +765,7 @@ procedure TMainOpt.btnChartClick(Sender: TObject);
 var i :integer;  x, y  : Extended;
 
 begin
+
  chtMain.Series[0].Clear;
  chtMain.Series[0].XValues.Order:=loNone;
  chtMain.Series[0].YValues.Order:=loNone;
@@ -899,7 +901,6 @@ end;
 
 procedure TMainOpt.btnZoomChtClick(Sender: TObject);
 begin
-//  ChtMain.AutoSize := False;
   ChtMain.ZoomPercent( 75 );
 end;
 
