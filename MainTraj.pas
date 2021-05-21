@@ -123,6 +123,8 @@ type
     btPontLoad: TButton;
     lblTF_br: TLabel;
     btnZoomCht: TButton;
+    SeriesInit: TFastLineSeries;
+    SeriesFin: TFastLineSeries;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -143,7 +145,7 @@ type
   end;
 
 // interface related
-procedure FillGrid (var k : Integer);
+procedure FillGrid (var k : Integer; Grid : TStringGrid);
 procedure FillEdit;
 procedure FillMemo;
 
@@ -227,12 +229,12 @@ begin
   ex0    := StrToFloat(edte0.Text);
   omega0 := StrToFloat(edtOmega0.Text) * PI/180;  // rad
   sma0   := StrToFloat(edtsma0.Text);             // AU
-  u0    := StrToFloat(edtu0.Text) * PI/180;      // rad
+  u0     := StrToFloat(edtu0.Text) * PI/180;      // rad
   p0     := sma0*(1-sqr(ex0));
-  r0    := p0 / (1+ex0*cos(u-omega0));              // r, AU
-  Vr0   := 1 / sqrt(p0) * ex0*sin(u-omega0);        // Vr, dim
-  Vu0   := 1 / sqrt(p0) * (1+ex0*cos(u-omega0));    // Vu, dim
-  Time0 := 0;                                    // Time, dim
+  r0     := p0 / (1+ex0*cos(u0-omega0));              // r, AU
+  Vr0    := 1 / sqrt(p0) * ex0*sin(u0-omega0);        // Vr, dim
+  Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0));    // Vu, dim
+  Time0  := 0;                                    // Time, dim
   if rbPrNeg.Checked then Pr0 := -1
   else Pr0 := 1;
   Pvr0  := StrToFloat(edtPvr.Text);
@@ -246,7 +248,7 @@ begin
   i_step := 0;
   TF    := StrToFloat(edtTF.Text) * t_r_b;       // dim
   ac    := StrToFloat(edtThrust.Text) / StrToFloat(edtm0.Text) * a_r_b; // dim
-  hr[1] := StrToFloat(edth.Text)*t_r_b;
+  hr[1] := StrToFloat(edth.Text) * t_r_b;
   hr[2] := 1E-8;
 // calculation for pure integration
   if Sender = btnInteg then
@@ -289,7 +291,7 @@ begin
   if not Pontryagin then
     begin
       rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
-      FillGrid(i_step);
+      FillGrid(i_step, MainOpt.strgrResults);
       MainOpt.btnChartClick(WorkThread);
       if not Terminated then Synchronize(ShowStatus);
     end
@@ -356,7 +358,7 @@ begin
           Synchronize(ShowStatus);
         end;
 
-      FillGrid(i_step);
+      FillGrid(i_step, MainOpt.strgrResults);
       MainOpt.btnChartClick(WorkThread);
       MainOpt.edtPvr.Text := MainOpt.lbledtPvrP.Text;
       MainOpt.edtPvu.Text := MainOpt.lbledtPvuP.Text;
@@ -405,7 +407,7 @@ begin
    d[5]  := 1;                                   // t
    d[6]  := Pvr*(sqr(Vu/r) - 2/sqr(r)/r)
               - Pvu*Vr*Vu/sqr(r);                // dPr
-   d[7]  := -Pr + Pvu*Vu/r;                      // dPvr
+   d[7]  := - Pr + Pvu*Vu/r;                     // dPvr
    d[8]  := (Pvu*Vr - 2*Pvr*Vu) / r;             // dPvu
 end;
 
@@ -555,28 +557,28 @@ begin
 end;
 
 // Fill the i-th  row of the Table with Results
-procedure FillGrid(var k : Integer);
+procedure FillGrid(var k : Integer; Grid : TStringGrid);
 
 var
   i,j : Integer;
 
 begin
-  MainOpt.strgrResults.RowCount := k+1;
+  Grid.RowCount := k+1;
   for j := 0 to k-1 do
     begin
-      MainOpt.strgrResults.Cells[0, j+1]  :=
+      Grid.Cells[0, j+1]  :=
                           floattostrF(Results[j, 0]         ,fffixed, 14, 0);   // # of step
-      MainOpt.strgrResults.Cells[1, j+1]  :=
+      Grid.Cells[1, j+1]  :=
                           floattostrF(Results[j, 1]*t_b_r   ,fffixed, 14, 2);   // Time, days
-      MainOpt.strgrResults.Cells[2, j+1]  :=
+      Grid.Cells[2, j+1]  :=
                           floattostrF(Results[j, 2]         ,fffixed, 14, 12);  // r, AU
-      MainOpt.strgrResults.Cells[3, j+1]  :=
+      Grid.Cells[3, j+1]  :=
                           floattostrF(Results[j, 3]*180/PI  ,fffixed, 14, 2);   // u, deg
-      for i := 4 to 5 do MainOpt.strgrResults.Cells[i, j+1] :=
+      for i := 4 to 5 do Grid.Cells[i, j+1] :=
                           floattostrF(Results[j, i]         ,fffixed, 14, 12);  // Vr, Vu
-      for i := 6 to 8 do MainOpt.strgrResults.Cells[i, j+1] :=
+      for i := 6 to 8 do Grid.Cells[i, j+1] :=
                           floattostrF(Results[j, i]         ,fffixed, 14, 12);  // Pr, Pvr, Pvu
-      MainOpt.strgrResults.Cells[9, j+1]  :=
+      Grid.Cells[9, j+1]  :=
                           floattostrF(Results[j, 9]*180/PI ,fffixed, 14, 2);    // lambda
     end;
 end;
@@ -594,28 +596,28 @@ begin
   VertScrollBar.Range := 580; // set the range to an higher number
   ShowScrollBar(Handle, SB_BOTH, True);
   // input Initial Data
-  edtOmega0.Text := FloatToStr(288.1);     // deg
+  edtOmega0.Text := FloatToStr(85.901);              // deg
   edte0.Text     := FloatToStr(0.0167086);
-  edtsma0.Text   := FloatToStr(1.000001018);     // AU
-  edtu0.Text     := FloatToStr(0);     // deg
-  // input target Data
-  edtOmegaF.Text := FloatToStr(0);     // deg
-  edteF.Text     := FloatToStr(0);
-  edtsmaF.Text   := FloatToStr(1.524); // AU
+  edtsma0.Text   := FloatToStr(1.000001018);        // AU
+  edtu0.Text     := FloatToStr(10);                 //deg
+  // input target orbit data
+  edtOmegaF.Text := FloatToStr(286.231);                  // deg
+  edteF.Text     := FloatToStr(0.0934);
+  edtsmaF.Text   := FloatToStr(1.524);              // AU
   // input SC Data
   edtm0.Text     := FloatToStr(100E+3);             // kg
   edtSpImp.Text  := FloatToStr(60000);              // s
   edtThrust.Text := FloatToStr(1.71976E-4*100E+3);  // N
   // integration Data
-  rbPrPos.Checked:= True;
-  edtPvr.Text    := FloatToStr(1);
-  edtPvu.Text    := FloatToStr(1);
-  edtTF.Text     := FloatToStr(475);   // days
-  edth.Text      := FloatToStr(0.5);   // days
   t_b_r  := Rz*sqrt(Rz/mu)/3600/24;
   t_r_b  := 1/t_b_r;
   a_b_r  := mu / sqr(Rz);
   a_r_b  := 1/a_b_r;
+  rbPrPos.Checked:= True;
+  edtPvr.Text    := FloatToStr(0.48596543299);
+  edtPvu.Text    := FloatToStr(1.29563753682);
+  edtTF.Text     := FloatToStrf(7.23*t_b_r, ffFixed, 6, 2);   // days
+  edth.Text      := FloatToStr(0.5);   // days
   lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
                                 fffixed, 3,6) + ' dimensionless';
   lblTF_br.Caption := FloatToStrF(StrToFloat(edtTF.Text)*t_r_b,
@@ -649,9 +651,9 @@ begin
   edtd1.Text  := FloatToStr(0.0001);
   edtd2.Text  := FloatToStr(0.0001);
   edtd3.Text  := FloatToStr(0.0001);
-  edtdl1.Text := FloatToStr(0.001);
-  edtdl2.Text := FloatToStr(0.001);
-  edtdl3.Text := FloatToStr(0.001);
+  edtdl1.Text := FloatToStr(0.01);
+  edtdl2.Text := FloatToStr(0.01);
+  edtdl3.Text := FloatToStr(0.01);
 end;
 
 // Hotkeys
@@ -703,6 +705,12 @@ begin
     StrToFloat((Sender as TEdit).Text);
     if Sender = edth then lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
                                                         fffixed, 3,6) + ' dimensionless';
+    if (Sender = edte0) or (Sender = edteF) then
+      if (StrToFloat((Sender as TEdit).Text) >= 1) or (StrToFloat((Sender as TEdit).Text) < 0) then
+        begin
+          showmessage('The value of eccentricity should be positive and greater than zero!');
+          (Sender as TEdit).SetFocus;
+        end;
   except
     (Sender as TEdit).SetFocus;
     Beep;
@@ -762,13 +770,44 @@ end;
 // Main Chart Building
 procedure TMainOpt.btnChartClick(Sender: TObject);
 
-var i :integer;  x, y  : Extended;
+const
+    fi = 0.1;  // step for in and fin orbit drawing, rad
+
+var i :integer;  x, y, radi, ang : Extended;
 
 begin
-
+// spacecraft trajectory
  chtMain.Series[0].Clear;
  chtMain.Series[0].XValues.Order:=loNone;
  chtMain.Series[0].YValues.Order:=loNone;
+// init otbit
+ chtMain.Series[1].Clear;
+ chtMain.Series[1].XValues.Order:=loNone;
+ chtMain.Series[1].YValues.Order:=loNone;
+// target oribt
+ chtMain.Series[2].Clear;
+ chtMain.Series[2].XValues.Order:=loNone;
+ chtMain.Series[2].YValues.Order:=loNone;
+
+// draw initial and target orbits
+ if rbTr.Checked then
+  begin
+    for i := 0 to Trunc(2*Pi/fi)+1 do
+      begin
+        ang  := fi * i;
+      // initial
+        radi := p0 / (1+ex0*cos(ang-omega0));    // p0 / (1+ex0*cos(u-omega0));
+        x := radi*cos(ang);
+        y := radi*sin(ang);
+        chtMain.Series[1].AddXY(x,y);
+      // target
+        radi := pF / (1+exF*cos(ang-omegaF));
+        x := radi*cos(ang);
+        y := radi*sin(ang);
+        chtMain.Series[2].AddXY(x,y);
+      end;
+  end;
+
  try
  for i:=1 to strgrResults.RowCount-1 do
   begin
@@ -813,7 +852,7 @@ begin
         y := StrToFloat(strgrResults.Cells[8,i]);
     end;
     chtMain.Series[0].AddXY(x,y);
-    chtMain.Series[0].Active := true;
+    ChtMain.Series[0].Active := True;
   end;
  except
    if Sender.ClassType = TButton then

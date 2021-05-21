@@ -1,8 +1,8 @@
 object MainOpt: TMainOpt
-  Left = 144
-  Top = 189
+  Left = 256
+  Top = 195
   Width = 888
-  Height = 628
+  Height = 631
   Caption = 'Opt Trajectory NEP'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -21,8 +21,8 @@ object MainOpt: TMainOpt
     Left = 0
     Top = 0
     Width = 872
-    Height = 589
-    ActivePage = tsResult
+    Height = 592
+    ActivePage = tsInit
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
@@ -775,16 +775,16 @@ object MainOpt: TMainOpt
               Top = 104
               Width = 75
               Height = 25
-              Caption = 'btnZoomCht'
+              Caption = 'Zoom Out'
               TabOrder = 10
               OnClick = btnZoomChtClick
             end
           end
           object chtMain: TChart
             Left = 8
-            Top = 8
+            Top = 0
             Width = 521
-            Height = 465
+            Height = 497
             BackWall.Brush.Color = clWhite
             BackWall.Brush.Style = bsClear
             Title.Text.Strings = (
@@ -796,8 +796,37 @@ object MainOpt: TMainOpt
             object SeriesMain: TFastLineSeries
               Marks.ArrowLength = 8
               Marks.Visible = False
-              SeriesColor = clRed
+              SeriesColor = 4227072
               Title = 'Series'
+              LinePen.Color = 4227072
+              LinePen.Width = 2
+              XValues.DateTime = False
+              XValues.Name = 'X'
+              XValues.Multiplier = 1.000000000000000000
+              XValues.Order = loAscending
+              YValues.DateTime = False
+              YValues.Name = 'Y'
+              YValues.Multiplier = 1.000000000000000000
+              YValues.Order = loNone
+            end
+            object SeriesInit: TFastLineSeries
+              Marks.ArrowLength = 8
+              Marks.Visible = False
+              SeriesColor = 10485760
+              LinePen.Color = 10485760
+              XValues.DateTime = False
+              XValues.Name = 'X'
+              XValues.Multiplier = 1.000000000000000000
+              XValues.Order = loAscending
+              YValues.DateTime = False
+              YValues.Name = 'Y'
+              YValues.Multiplier = 1.000000000000000000
+              YValues.Order = loNone
+            end
+            object SeriesFin: TFastLineSeries
+              Marks.ArrowLength = 8
+              Marks.Visible = False
+              SeriesColor = clRed
               LinePen.Color = clRed
               XValues.DateTime = False
               XValues.Name = 'X'
