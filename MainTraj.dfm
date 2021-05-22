@@ -1,6 +1,6 @@
 object MainOpt: TMainOpt
-  Left = 256
-  Top = 195
+  Left = 252
+  Top = 234
   Width = 888
   Height = 631
   Caption = 'Opt Trajectory NEP'
@@ -769,6 +769,7 @@ object MainOpt: TMainOpt
               Height = 25
               Caption = 'Save'
               TabOrder = 9
+              OnClick = btnChSaveClick
             end
             object btnZoomCht: TButton
               Left = 176
@@ -849,6 +850,7 @@ object MainOpt: TMainOpt
         Default = True
         ModalResult = 1
         TabOrder = 0
+        OnClick = btnSaveClick
         NumGlyphs = 2
       end
     end
@@ -1281,9 +1283,9 @@ object MainOpt: TMainOpt
           Top = 36
           Width = 81
           Height = 21
-          EditLabel.Width = 40
+          EditLabel.Width = 34
           EditLabel.Height = 13
-          EditLabel.Caption = 'f(Tf)___'
+          EditLabel.Caption = 'f(r)___'
           EditLabel.Font.Charset = DEFAULT_CHARSET
           EditLabel.Font.Color = clWindowText
           EditLabel.Font.Height = -11
@@ -1306,9 +1308,9 @@ object MainOpt: TMainOpt
           Top = 60
           Width = 81
           Height = 21
-          EditLabel.Width = 46
+          EditLabel.Width = 40
           EditLabel.Height = 13
-          EditLabel.Caption = 'f(PVr)___'
+          EditLabel.Caption = 'f(Vr)___'
           EditLabel.Font.Charset = DEFAULT_CHARSET
           EditLabel.Font.Color = clWindowText
           EditLabel.Font.Height = -11
@@ -1331,9 +1333,9 @@ object MainOpt: TMainOpt
           Top = 84
           Width = 81
           Height = 21
-          EditLabel.Width = 48
+          EditLabel.Width = 42
           EditLabel.Height = 13
-          EditLabel.Caption = 'f(PVu)___'
+          EditLabel.Caption = 'f(Vu)___'
           EditLabel.Font.Charset = DEFAULT_CHARSET
           EditLabel.Font.Color = clWindowText
           EditLabel.Font.Height = -11
@@ -1387,6 +1389,7 @@ object MainOpt: TMainOpt
         Height = 25
         Caption = 'Save Init'
         TabOrder = 8
+        OnClick = btnPontSaveClick
       end
       object btPontLoad: TButton
         Left = 792
@@ -1395,7 +1398,17 @@ object MainOpt: TMainOpt
         Height = 25
         Caption = 'Load Init'
         TabOrder = 9
+        OnClick = btPontLoadClick
       end
     end
+  end
+  object SaveDialog1: TSaveDialog
+    Left = 744
+  end
+  object OpenDialog1: TOpenDialog
+    Left = 820
+  end
+  object SavePictureDialog1: TSavePictureDialog
+    Left = 656
   end
 end

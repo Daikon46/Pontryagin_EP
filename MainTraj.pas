@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, StdCtrls, Buttons, ExtCtrls, TeeProcs, TeEngine, Chart,
-  Series, DBCtrls, Math, Grids, olmethod, Method;
+  Series, DBCtrls, Math, Grids, olmethod, Method, ExtDlgs;
 
 type
   TWorkThread = class(TThread)
@@ -125,6 +125,9 @@ type
     btnZoomCht: TButton;
     SeriesInit: TFastLineSeries;
     SeriesFin: TFastLineSeries;
+    SaveDialog1: TSaveDialog;
+    OpenDialog1: TOpenDialog;
+    SavePictureDialog1: TSavePictureDialog;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -138,6 +141,10 @@ type
     procedure lbledtKeyPress(Sender: TObject; var Key: Char);
     procedure lbledtExit(Sender: TObject);
     procedure btnZoomChtClick(Sender: TObject);
+    procedure btnPontSaveClick(Sender: TObject);
+    procedure btPontLoadClick(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
+    procedure btnChSaveClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -396,7 +403,7 @@ begin
    Pr    := y[6];
    Pvr   := y[7];
    Pvu   := y[8];
-   lamb  := ArcCos(Pvr / sqrt(Pvr*Pvr + 1));
+   lamb  := ArcTan2(Pvu, Pvr);
    S     := ac*cos(lamb); // along Vr
    T     := ac*sin(lamb); // along Vu
 // Right part
@@ -435,7 +442,7 @@ begin
    Results[i_step-1, 1]  := yr[5];  // Time
    for i := 2 to 5 do Results[i_step-1, i] := yr[i-1]; // r, u, Vr, Vu
    for i := 6 to 8 do Results[i_step-1, i] := yr[i];   // Pr, Pvr, Pvu
-   Results[i_step-1, 9] := ArcCos(yr[7] / sqrt(sqr(yr[7]) + 1)); // lambda
+   Results[i_step-1, 9] := lamb; // lambda
 // Check exit function
    fr[1] := yr[5] - TF;
    if not Pontryagin then
@@ -728,7 +735,7 @@ begin
                   FloatToStrF(time*t_b_r, fffixed, 6, 2) + ' days.')
       else
         showmessage('Calculation was terminated at f_summ = ' +
-                    FloatToStrF(f_summ, fffixed, 6, 6));
+                    FloatToStrF(f_summ, fffixed, 6, 6))
     end
   else
     begin
@@ -771,7 +778,7 @@ end;
 procedure TMainOpt.btnChartClick(Sender: TObject);
 
 const
-    fi = 0.1;  // step for in and fin orbit drawing, rad
+    fi = 0.05;  // step for in and fin orbit drawing, rad
 
 var i :integer;  x, y, radi, ang : Extended;
 
@@ -833,22 +840,22 @@ begin
     end;
     if rblambVt.Checked then
     begin   {lambda1(t)}
-        x := StrToFloat(strgrResults.Cells[0,i]);
+        x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[9,i]);
     end;
     if rbPrVt.Checked then
     begin   {Pr (t)}
-        x := StrToFloat(strgrResults.Cells[0,i]);
+        x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[6,i]);
     end;
     if rbPvrVt.Checked then
     begin   {PVr(t)}
-        x := StrToFloat(strgrResults.Cells[0,i]);
+        x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[7,i]);
     end;
     if rbPvuVt.Checked then
     begin   {PVu(t)}
-        x := StrToFloat(strgrResults.Cells[0,i]);
+        x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[8,i]);
     end;
     chtMain.Series[0].AddXY(x,y);
@@ -943,4 +950,101 @@ begin
   ChtMain.ZoomPercent( 75 );
 end;
 
+// Save initial costate variables values
+procedure TMainOpt.btnPontSaveClick(Sender: TObject);
+  var f: TextFile;
+begin
+ try
+  if SaveDialog1.Execute then
+    begin
+       AssignFile(f, SaveDialog1.Filename + '.txt');
+       Rewrite(f);
+       writeln(f, 'Initial Data:');
+       writeln(f, lbledtTimeP.Text);
+       writeln(f, lbledtPvrP.Text);
+       writeln(f, lbledtPvuP.Text);
+       CloseFile(f);
+       MessageBox(Handle,'Costate variables have been saved.','Message...',MB_ICONINFORMATION);
+    end
+  else MessageBox(Handle,'Attention! Data is not saved.','Message...',MB_ICONSTOP);
+ except
+  showmessage('Program could not create file. Check your antivirus.');
+ end;
+end;
+
+// Load initial costate variables values
+procedure TMainOpt.btPontLoadClick(Sender: TObject);
+  var
+    f : TextFile;
+    text : String;
+begin
+  if OpenDialog1.Execute then
+    begin
+      AssignFile(f, OpenDialog1.FileName);
+      Reset(f);
+      ReadLn(f, text);
+      if text <> 'Initial Data:' then
+        ShowMessage('Attention! Incorrect file has been choosen.')
+      else
+        begin
+          ReadLn(f, text);
+          lbledtTimeP.Text := text;
+          ReadLn(f, text);
+          lbledtPvrP.Text := text;
+          ReadLn(f, text);
+          lbledtPvuP.Text := text;
+          ShowMessage('Data loaded from the file.')
+        end;
+      CloseFile(f);
+    end
+  else
+    begin
+      MessageBox(Handle,'Attention! File was not opened','Message...',MB_ICONSTOP);
+    end;
+end;
+
+// Save results of integration (table of data)
+procedure TMainOpt.btnSaveClick(Sender: TObject);
+var f: TextFile;
+    s1:string;
+    RowCount,ColCount:integer;
+begin
+ try
+  if SaveDialog1.Execute then
+   begin
+    AssignFile(f,SaveDialog1.FileName+ '.txt');
+    Rewrite(f);
+    Append(f);
+     for RowCount:=0 to StrgrResults.RowCount do
+      begin
+       for ColCount:=0 to StrgrResults.ColCount do
+        begin
+         s1:= s1 + '   '+ StrgrResults.Cells[ColCount,RowCount];
+        end;
+       writeln(f,s1);
+       s1:=' ';
+      end;
+    CloseFile(f);
+    MessageBox(Handle,'Data have been saved!','Message...',MB_ICONINFORMATION);
+   end
+  else MessageBox(Handle,'Attention! Data is not saved.','Message...',MB_ICONSTOP);
+ except
+  showmessage('Program could not create file. Check your antivirus.');
+ end;
+end;
+
+// save chart
+procedure TMainOpt.btnChSaveClick(Sender: TObject);
+begin
+ try
+  if SavePictureDialog1.Execute then
+   begin
+    ChtMain.SaveToBitmapFile(SavePictureDialog1.FileName + '.bmp');
+    MessageBox(Handle,'The chart has been saved!','Message...',MB_ICONINFORMATION);
+   end
+  else MessageBox(Handle,'Attention! Chart is not saved.','Message...',MB_ICONSTOP);
+ except
+  showmessage('Program could not create file. Check your antivirus.');
+ end;
+end;
 end.
