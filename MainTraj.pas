@@ -778,9 +778,12 @@ end;
 procedure TMainOpt.btnChartClick(Sender: TObject);
 
 const
-    fi = 0.05;  // step for in and fin orbit drawing, rad
+  fi = 0.05;  // step for in and fin orbit drawing, rad
 
-var i :integer;  x, y, radi, ang : Extended;
+var
+  i : integer;
+  x, y, radi, ang, yf : Extended;
+  Flag_f : Boolean; // Shows if target parameter has to be drawn
 
 begin
 // spacecraft trajectory
@@ -822,44 +825,56 @@ begin
     begin
         x := StrToFloat(strgrResults.Cells[2,i])*cos(StrToFloat(strgrResults.Cells[3,i])*Pi/180);
         y := StrToFloat(strgrResults.Cells[2,i])*sin(StrToFloat(strgrResults.Cells[3,i])*Pi/180);
+        Flag_f := false;
     end;
     if rbrvt.Checked then
     begin   {r(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[2,i]);
+        yf:= r_f;
+        Flag_f := True;
     end;
     if rbVrVt.Checked then
     begin   {Vr(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[4,i]);
+        yf:= Vr_f;
+        Flag_f := True;
     end;
     if rbVuVt.Checked then
     begin   {Vu(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[5,i]);
+        yf:= Vu_f;
+        Flag_f := True;
     end;
     if rblambVt.Checked then
     begin   {lambda1(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[9,i]);
+        Flag_f := false;
     end;
     if rbPrVt.Checked then
     begin   {Pr (t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[6,i]);
+        Flag_f := false;
     end;
     if rbPvrVt.Checked then
     begin   {PVr(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[7,i]);
+        Flag_f := false;
     end;
     if rbPvuVt.Checked then
     begin   {PVu(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[8,i]);
+        Flag_f := false;
     end;
     chtMain.Series[0].AddXY(x,y);
     ChtMain.Series[0].Active := True;
+    if Flag_f then chtMain.Series[1].AddXY(x,yf);
   end;
  except
    if Sender.ClassType = TButton then
