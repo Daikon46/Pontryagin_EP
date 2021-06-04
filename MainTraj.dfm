@@ -1,6 +1,6 @@
 object MainOpt: TMainOpt
-  Left = 252
-  Top = 234
+  Left = 140
+  Top = 241
   Width = 888
   Height = 631
   Caption = 'Opt Trajectory NEP'
@@ -22,7 +22,7 @@ object MainOpt: TMainOpt
     Top = 0
     Width = 872
     Height = 592
-    ActivePage = tsResult
+    ActivePage = tsInit
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
@@ -158,7 +158,7 @@ object MainOpt: TMainOpt
         end
       end
       object grpFinal: TGroupBox
-        Left = 432
+        Left = 453
         Top = 8
         Width = 377
         Height = 249
@@ -360,7 +360,7 @@ object MainOpt: TMainOpt
         end
       end
       object grpIntData: TGroupBox
-        Left = 432
+        Left = 453
         Top = 272
         Width = 377
         Height = 273
@@ -588,6 +588,16 @@ object MainOpt: TMainOpt
           TabOrder = 7
         end
       end
+      object btnSwapInit: TButton
+        Left = 398
+        Top = 50
+        Width = 49
+        Height = 33
+        Caption = 'Swap'#13#10'Orbits'
+        TabOrder = 4
+        WordWrap = True
+        OnClick = btnSwapInitClick
+      end
     end
     object tsResult: TTabSheet
       Caption = 'Results'
@@ -772,7 +782,7 @@ object MainOpt: TMainOpt
               OnClick = btnChSaveClick
             end
             object btnZoomCht: TButton
-              Left = 176
+              Left = 168
               Top = 104
               Width = 75
               Height = 25
@@ -791,6 +801,18 @@ object MainOpt: TMainOpt
             Title.Text.Strings = (
               'TChart')
             Title.Visible = False
+            BottomAxis.Title.Caption = 'Time, days'
+            BottomAxis.Title.Font.Charset = DEFAULT_CHARSET
+            BottomAxis.Title.Font.Color = clBlack
+            BottomAxis.Title.Font.Height = -11
+            BottomAxis.Title.Font.Name = 'Arial'
+            BottomAxis.Title.Font.Style = [fsBold]
+            LeftAxis.Title.Caption = 'Radi, AU'
+            LeftAxis.Title.Font.Charset = RUSSIAN_CHARSET
+            LeftAxis.Title.Font.Color = clBlack
+            LeftAxis.Title.Font.Height = -11
+            LeftAxis.Title.Font.Name = 'Arial'
+            LeftAxis.Title.Font.Style = [fsBold]
             Legend.Visible = False
             View3D = False
             TabOrder = 0

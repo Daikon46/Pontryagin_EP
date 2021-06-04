@@ -128,6 +128,7 @@ type
     SaveDialog1: TSaveDialog;
     OpenDialog1: TOpenDialog;
     SavePictureDialog1: TSavePictureDialog;
+    btnSwapInit: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -145,6 +146,7 @@ type
     procedure btPontLoadClick(Sender: TObject);
     procedure btnSaveClick(Sender: TObject);
     procedure btnChSaveClick(Sender: TObject);
+    procedure btnSwapInitClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -191,6 +193,7 @@ var
   TF                            // Final time
   : extended;
   t_b_r, t_r_b,
+  V_b_r, V_r_b,
   a_b_r, a_r_b : extended;      // dimensionless transformation
   //переменные циклов
   i_step : integer;
@@ -378,6 +381,9 @@ begin
   MainOpt.btnIntStop.Enabled := False;
   MainOpt.btnPontCalc.Enabled := True;
   MainOpt.btnPause.Enabled := False;
+  MainOpt.edtd1.Text  := FloatToStr(0.001);
+  MainOpt.edtd2.Text  := FloatToStr(0.001);
+  MainOpt.edtd3.Text  := FloatToStr(0.001);
   WorkThread.Free;
 end;
 
@@ -574,19 +580,19 @@ begin
   for j := 0 to k-1 do
     begin
       Grid.Cells[0, j+1]  :=
-                          floattostrF(Results[j, 0]         ,fffixed, 14, 0);   // # of step
+                          floattostrF(Results[j, 0]           ,fffixed, 14, 0);   // # of step
       Grid.Cells[1, j+1]  :=
-                          floattostrF(Results[j, 1]*t_b_r   ,fffixed, 14, 2);   // Time, days
+                          floattostrF(Results[j, 1]*t_b_r     ,fffixed, 14, 2);   // Time, days
       Grid.Cells[2, j+1]  :=
-                          floattostrF(Results[j, 2]         ,fffixed, 14, 12);  // r, AU
+                          floattostrF(Results[j, 2]           ,fffixed, 14, 12);  // r, AU
       Grid.Cells[3, j+1]  :=
-                          floattostrF(Results[j, 3]*180/PI  ,fffixed, 14, 2);   // u, deg
+                          floattostrF(Results[j, 3]*180/PI    ,fffixed, 14, 2);   // u, deg
       for i := 4 to 5 do Grid.Cells[i, j+1] :=
-                          floattostrF(Results[j, i]         ,fffixed, 14, 12);  // Vr, Vu
+                          floattostrF(Results[j, i]*V_b_r*1E-3,fffixed, 14, 12);  // Vr, Vu
       for i := 6 to 8 do Grid.Cells[i, j+1] :=
-                          floattostrF(Results[j, i]         ,fffixed, 14, 12);  // Pr, Pvr, Pvu
+                          floattostrF(Results[j, i]           ,fffixed, 14, 12);  // Pr, Pvr, Pvu
       Grid.Cells[9, j+1]  :=
-                          floattostrF(Results[j, 9]*180/PI ,fffixed, 14, 2);    // lambda
+                          floattostrF(Results[j, 9]*180/PI    ,fffixed, 14, 2);    // lambda
     end;
 end;
 
@@ -616,9 +622,11 @@ begin
   edtSpImp.Text  := FloatToStr(60000);              // s
   edtThrust.Text := FloatToStr(1.71976E-4*100E+3);  // N
   // integration Data
-  t_b_r  := Rz*sqrt(Rz/mu)/3600/24;
+  t_b_r  := Rz*sqrt(Rz/mu)/3600/24;                 // from dimensionless to days
   t_r_b  := 1/t_b_r;
-  a_b_r  := mu / sqr(Rz);
+  V_b_r  := Sqrt(mu/Rz);                            // from dimensionless to m/s
+  V_r_b  := 1/V_b_r;
+  a_b_r  := mu / sqr(Rz);                           // from dimensionless to m/s2
   a_r_b  := 1/a_b_r;
   rbPrPos.Checked:= True;
   edtPvr.Text    := FloatToStr(0.48596543299);
@@ -655,12 +663,12 @@ begin
   edtc1.Text  := FloatToStr(1);
   edtc2.Text  := FloatToStr(1);
   edtc3.Text  := FloatToStr(1);
-  edtd1.Text  := FloatToStr(0.0001);
-  edtd2.Text  := FloatToStr(0.0001);
-  edtd3.Text  := FloatToStr(0.0001);
-  edtdl1.Text := FloatToStr(0.01);
-  edtdl2.Text := FloatToStr(0.01);
-  edtdl3.Text := FloatToStr(0.01);
+  edtd1.Text  := FloatToStr(0.001);
+  edtd2.Text  := FloatToStr(0.001);
+  edtd3.Text  := FloatToStr(0.001);
+  edtdl1.Text := FloatToStr(1);
+  edtdl2.Text := FloatToStr(1);
+  edtdl3.Text := FloatToStr(1);
 end;
 
 // Hotkeys
@@ -715,7 +723,7 @@ begin
     if (Sender = edte0) or (Sender = edteF) then
       if (StrToFloat((Sender as TEdit).Text) >= 1) or (StrToFloat((Sender as TEdit).Text) < 0) then
         begin
-          showmessage('The value of eccentricity should be positive and greater than zero!');
+          showmessage('The value of eccentricity should be positive and lesser than zero!');
           (Sender as TEdit).SetFocus;
         end;
   except
@@ -826,6 +834,8 @@ begin
         x := StrToFloat(strgrResults.Cells[2,i])*cos(StrToFloat(strgrResults.Cells[3,i])*Pi/180);
         y := StrToFloat(strgrResults.Cells[2,i])*sin(StrToFloat(strgrResults.Cells[3,i])*Pi/180);
         Flag_f := false;
+        chtMain.BottomAxis.Title.Caption := 'X, AU';
+        chtMain.LeftAxis.Title.Caption := 'Y, AU';
     end;
     if rbrvt.Checked then
     begin   {r(t)}
@@ -833,44 +843,58 @@ begin
         y := StrToFloat(strgrResults.Cells[2,i]);
         yf:= r_f;
         Flag_f := True;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'Heliocentric Distance, AU';
     end;
     if rbVrVt.Checked then
     begin   {Vr(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[4,i]);
-        yf:= Vr_f;
+        yf:= Vr_f*V_b_r*1e-3;
         Flag_f := True;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'Radial Velocity (Vr), km/s';
     end;
     if rbVuVt.Checked then
     begin   {Vu(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[5,i]);
-        yf:= Vu_f;
+        yf:= Vu_f*V_b_r*1e-3;
         Flag_f := True;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'Transverse Velocity (Vu), km/s';
     end;
     if rblambVt.Checked then
     begin   {lambda1(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[9,i]);
         Flag_f := false;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'Control angle, deg.';
     end;
     if rbPrVt.Checked then
     begin   {Pr (t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[6,i]);
         Flag_f := false;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'Distance costate var. (Pr)';
     end;
     if rbPvrVt.Checked then
     begin   {PVr(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[7,i]);
         Flag_f := false;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'PVr costate var.';
     end;
     if rbPvuVt.Checked then
     begin   {PVu(t)}
         x := StrToFloat(strgrResults.Cells[1,i]);
         y := StrToFloat(strgrResults.Cells[8,i]);
         Flag_f := false;
+        chtMain.BottomAxis.Title.Caption := 'Time, days';
+        chtMain.LeftAxis.Title.Caption := 'PVu costate var.';
     end;
     chtMain.Series[0].AddXY(x,y);
     ChtMain.Series[0].Active := True;
@@ -974,12 +998,27 @@ begin
     begin
        AssignFile(f, SaveDialog1.Filename + '.txt');
        Rewrite(f);
+       // String to identify correct file
        writeln(f, 'Initial Data:');
+       // Write costate variables
        writeln(f, lbledtTimeP.Text);
        writeln(f, lbledtPvrP.Text);
        writeln(f, lbledtPvuP.Text);
+       // Write initial orbit and SC position
+       Writeln(f, edtOmega0.Text);
+       Writeln(f, edte0.Text);
+       Writeln(f, edtsma0.Text);
+       Writeln(f, edtu0.Text);
+       // Write target orbit
+       Writeln(f, edtOmegaF.Text);
+       Writeln(f, edteF.Text);
+       Writeln(f, edtsmaF.Text);
+       // Write SC parameters
+       Writeln(f, edtm0.Text);
+       Writeln(f, edtThrust.Text);
+       Writeln(f, edtSpImp.Text);
        CloseFile(f);
-       MessageBox(Handle,'Costate variables have been saved.','Message...',MB_ICONINFORMATION);
+       MessageBox(Handle,'Initial data have been saved.','Message...',MB_ICONINFORMATION);
     end
   else MessageBox(Handle,'Attention! Data is not saved.','Message...',MB_ICONSTOP);
  except
@@ -1002,12 +1041,36 @@ begin
         ShowMessage('Attention! Incorrect file has been choosen.')
       else
         begin
+          // Read costate variables
           ReadLn(f, text);
           lbledtTimeP.Text := text;
           ReadLn(f, text);
           lbledtPvrP.Text := text;
           ReadLn(f, text);
           lbledtPvuP.Text := text;
+          // Read initial orbit and SC position
+          ReadLn(f, text);
+          edtOmega0.Text := text;
+          ReadLn(f, text);
+          edte0.Text := text;
+          ReadLn(f, text);
+          edtsma0.Text := text;
+          ReadLn(f, text);
+          edtu0.Text := text;
+          // Read target orbit
+          ReadLn(f, text);
+          edtOmegaF.Text := text;
+          ReadLn(f, text);
+          edteF.Text := text;
+          ReadLn(f, text);
+          edtsmaF.Text := text;
+          // Read SC parameters
+          ReadLn(f, text);
+          edtm0.Text := text;
+          ReadLn(f, text);
+          edtThrust.Text := text;
+          ReadLn(f, text);
+          edtSpImp.Text := text;
           ShowMessage('Data loaded from the file.')
         end;
       CloseFile(f);
@@ -1016,6 +1079,10 @@ begin
     begin
       MessageBox(Handle,'Attention! File was not opened','Message...',MB_ICONSTOP);
     end;
+ edtPvu.Text := lbledtPvuP.Text;
+ edtPvr.Text := lbledtPvrP.Text;
+ edtTF.Text  := FloatToStrF(StrToFloat(lbledtTimeP.Text)*t_b_r,
+                            fffixed, 6,2);
 end;
 
 // Save results of integration (table of data)
@@ -1062,4 +1129,23 @@ begin
   showmessage('Program could not create file. Check your antivirus.');
  end;
 end;
+
+// Swap initial and target orbits
+procedure TMainOpt.btnSwapInitClick(Sender: TObject);
+
+var
+  argument, eccent, smaxe : string;
+
+begin
+  argument := edtOmega0.Text;
+  eccent := edte0.Text;
+  smaxe := edtsma0.Text;
+  edtOmega0.Text := edtOmegaF.Text;
+  edte0.Text := edteF.Text;
+  edtsma0.Text := edtsmaF.Text;
+  edtOmegaF.Text := argument;
+  edteF.Text := eccent;
+  edtsmaF.Text := smaxe;
+end;
+
 end.
