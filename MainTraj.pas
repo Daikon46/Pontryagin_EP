@@ -594,6 +594,13 @@ begin
       Grid.Cells[9, j+1]  :=
                           floattostrF(Results[j, 9]*180/PI    ,fffixed, 14, 2);    // lambda
     end;
+// delete redundant rows if step do not fit TF
+if Results[k-2, 1] < Results[k-3, 1] then
+  begin
+    for j := 1 to 9 do
+      Grid.Cells[j, k-2] := Grid.Cells[j, k];
+      Grid.RowCount := k-1
+  end;
 end;
 
 //-------------------------------------------------------------

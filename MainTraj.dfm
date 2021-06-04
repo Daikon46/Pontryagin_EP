@@ -1,6 +1,6 @@
 object MainOpt: TMainOpt
-  Left = 140
-  Top = 241
+  Left = 142
+  Top = 139
   Width = 888
   Height = 631
   Caption = 'Opt Trajectory NEP'
@@ -22,7 +22,7 @@ object MainOpt: TMainOpt
     Top = 0
     Width = 872
     Height = 592
-    ActivePage = tsInit
+    ActivePage = tsResult
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
