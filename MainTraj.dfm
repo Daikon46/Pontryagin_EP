@@ -1,6 +1,6 @@
 object MainOpt: TMainOpt
-  Left = 142
-  Top = 139
+  Left = 363
+  Top = 223
   Width = 888
   Height = 631
   Caption = 'Opt Trajectory NEP'
@@ -22,7 +22,7 @@ object MainOpt: TMainOpt
     Top = 0
     Width = 872
     Height = 592
-    ActivePage = tsResult
+    ActivePage = tsInit
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
@@ -161,7 +161,7 @@ object MainOpt: TMainOpt
         Left = 453
         Top = 8
         Width = 377
-        Height = 249
+        Height = 193
         Caption = 'Target Orbit'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -361,9 +361,9 @@ object MainOpt: TMainOpt
       end
       object grpIntData: TGroupBox
         Left = 453
-        Top = 272
+        Top = 216
         Width = 377
-        Height = 273
+        Height = 329
         Caption = 'Integration Parameters'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -413,7 +413,7 @@ object MainOpt: TMainOpt
         end
         object lblTF: TLabel
           Left = 14
-          Top = 128
+          Top = 153
           Width = 250
           Height = 13
           Caption = 'Flight time, days ____________________________'
@@ -426,7 +426,7 @@ object MainOpt: TMainOpt
         end
         object lblh: TLabel
           Left = 14
-          Top = 170
+          Top = 195
           Width = 276
           Height = 13
           Caption = 'Integration step, days____________________________'
@@ -439,7 +439,7 @@ object MainOpt: TMainOpt
         end
         object lblh_br: TLabel
           Left = 259
-          Top = 186
+          Top = 210
           Width = 16
           Height = 13
           Caption = '0.5'
@@ -452,10 +452,23 @@ object MainOpt: TMainOpt
         end
         object lblTF_br: TLabel
           Left = 259
-          Top = 145
+          Top = 169
           Width = 16
           Height = 13
           Caption = '0.5'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object lblPm: TLabel
+          Left = 14
+          Top = 121
+          Width = 241
+          Height = 13
+          Caption = 'Costate variable of fuel mass ratio (Pm) ________'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -527,9 +540,10 @@ object MainOpt: TMainOpt
         object edtTF: TEdit
           Tag = 3
           Left = 257
-          Top = 120
+          Top = 145
           Width = 81
           Height = 21
+          Enabled = False
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -545,7 +559,7 @@ object MainOpt: TMainOpt
         object edth: TEdit
           Tag = 4
           Left = 257
-          Top = 162
+          Top = 187
           Width = 81
           Height = 21
           Font.Charset = DEFAULT_CHARSET
@@ -562,7 +576,7 @@ object MainOpt: TMainOpt
         end
         object btnInteg: TButton
           Left = 48
-          Top = 200
+          Top = 225
           Width = 139
           Height = 33
           Caption = 'Calculate Trajectory'
@@ -571,7 +585,7 @@ object MainOpt: TMainOpt
         end
         object btnIntStop: TButton
           Left = 224
-          Top = 200
+          Top = 225
           Width = 75
           Height = 33
           Caption = 'Halt'
@@ -581,11 +595,29 @@ object MainOpt: TMainOpt
         end
         object pbInteg: TProgressBar
           Left = 16
-          Top = 240
+          Top = 265
           Width = 321
           Height = 17
           Max = 60
           TabOrder = 7
+        end
+        object edtPm: TEdit
+          Tag = 3
+          Left = 257
+          Top = 113
+          Width = 81
+          Height = 21
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 8
+          Text = '475'
+          OnChange = edtChange
+          OnExit = NumEditExit
+          OnKeyPress = NumValuesInput
         end
       end
       object btnSwapInit: TButton
@@ -607,7 +639,7 @@ object MainOpt: TMainOpt
         Top = 24
         Width = 857
         Height = 529
-        ActivePage = tsCharts
+        ActivePage = tsTable
         Align = alCustom
         TabOrder = 1
         object tsTable: TTabSheet
@@ -1209,14 +1241,14 @@ object MainOpt: TMainOpt
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 2
-        object lbledtTimeP: TLabeledEdit
+        object lbledtPm: TLabeledEdit
           Left = 57
           Top = 36
           Width = 81
           Height = 21
-          EditLabel.Width = 46
+          EditLabel.Width = 44
           EditLabel.Height = 13
-          EditLabel.Caption = 'Time____'
+          EditLabel.Caption = 'Pm_____'
           EditLabel.Font.Charset = DEFAULT_CHARSET
           EditLabel.Font.Color = clWindowText
           EditLabel.Font.Height = -11
@@ -1300,7 +1332,7 @@ object MainOpt: TMainOpt
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 3
-        object lbledtTimeE: TLabeledEdit
+        object lbledtPmE: TLabeledEdit
           Left = 59
           Top = 36
           Width = 81
