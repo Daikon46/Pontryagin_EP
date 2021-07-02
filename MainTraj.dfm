@@ -22,7 +22,7 @@ object MainOpt: TMainOpt
     Top = 0
     Width = 872
     Height = 592
-    ActivePage = tsInit
+    ActivePage = tsResult
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
@@ -374,10 +374,10 @@ object MainOpt: TMainOpt
         TabOrder = 3
         object lblPr0: TLabel
           Left = 14
-          Top = 90
-          Width = 239
+          Top = 83
+          Width = 269
           Height = 13
-          Caption = 'Costate variable of radi (Pr) _________________'
+          Caption = 'Costate variable of radi (Pr) ______________________'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -466,9 +466,9 @@ object MainOpt: TMainOpt
         object lblPm: TLabel
           Left = 14
           Top = 121
-          Width = 241
+          Width = 235
           Height = 13
-          Caption = 'Costate variable of fuel mass ratio (Pm) ________'
+          Caption = 'Costate variable of fuel mass ratio (Pm) _______'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -476,28 +476,30 @@ object MainOpt: TMainOpt
           Font.Style = []
           ParentFont = False
         end
-        object grpPr: TGroupBox
+        object grpPm: TGroupBox
           Left = 240
-          Top = 69
+          Top = 101
           Width = 101
           Height = 35
           TabOrder = 2
-          object rbPrNeg: TRadioButton
-            Left = 9
+          object rbPmNeg: TRadioButton
+            Left = 8
             Top = 12
             Width = 45
             Height = 17
             Caption = '-1'
             Checked = True
+            Enabled = False
             TabOrder = 0
             TabStop = True
           end
-          object rbPrPos: TRadioButton
+          object rbPmPos: TRadioButton
             Left = 53
             Top = 12
             Width = 46
             Height = 17
             Caption = '+1'
+            Enabled = False
             TabOrder = 1
           end
         end
@@ -538,12 +540,11 @@ object MainOpt: TMainOpt
           OnKeyPress = NumValuesInput
         end
         object edtTF: TEdit
-          Tag = 3
+          Tag = 5
           Left = 257
           Top = 145
           Width = 81
           Height = 21
-          Enabled = False
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -601,10 +602,10 @@ object MainOpt: TMainOpt
           Max = 60
           TabOrder = 7
         end
-        object edtPm: TEdit
+        object edtPr: TEdit
           Tag = 3
           Left = 257
-          Top = 113
+          Top = 75
           Width = 81
           Height = 21
           Font.Charset = DEFAULT_CHARSET
@@ -639,7 +640,7 @@ object MainOpt: TMainOpt
         Top = 24
         Width = 857
         Height = 529
-        ActivePage = tsTable
+        ActivePage = tsCharts
         Align = alCustom
         TabOrder = 1
         object tsTable: TTabSheet
@@ -1241,14 +1242,14 @@ object MainOpt: TMainOpt
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 2
-        object lbledtPm: TLabeledEdit
+        object lbledtPr: TLabeledEdit
           Left = 57
           Top = 36
           Width = 81
           Height = 21
-          EditLabel.Width = 44
+          EditLabel.Width = 40
           EditLabel.Height = 13
-          EditLabel.Caption = 'Pm_____'
+          EditLabel.Caption = 'Pr_____'
           EditLabel.Font.Charset = DEFAULT_CHARSET
           EditLabel.Font.Color = clWindowText
           EditLabel.Font.Height = -11
@@ -1332,7 +1333,7 @@ object MainOpt: TMainOpt
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 3
-        object lbledtPmE: TLabeledEdit
+        object lbledtFrE: TLabeledEdit
           Left = 59
           Top = 36
           Width = 81
@@ -1357,7 +1358,7 @@ object MainOpt: TMainOpt
           TabOrder = 0
           OnKeyPress = lbledtKeyPress
         end
-        object lbledtPvrE: TLabeledEdit
+        object lbledtFVrE: TLabeledEdit
           Left = 59
           Top = 60
           Width = 81
@@ -1382,7 +1383,7 @@ object MainOpt: TMainOpt
           TabOrder = 1
           OnKeyPress = lbledtKeyPress
         end
-        object lbledtPvuE: TLabeledEdit
+        object lbledtFVuE: TLabeledEdit
           Left = 59
           Top = 84
           Width = 81
