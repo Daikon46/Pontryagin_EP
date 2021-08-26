@@ -246,7 +246,7 @@ begin
   p0     := sma0*(1-sqr(ex0));
   r0     := p0 / (1+ex0*cos(u0-omega0));              // r, AU
   Vr0    := 1 / sqrt(p0) * ex0*sin(u0-omega0);        // Vr, dim
-  Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0)); //+ 8793*V_r_b;    // Vu, dim
+  Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0)); // + 8000*V_r_b;    // Vu, dim
   Time0  := 0;                                    // Time, dim
   // old code for Pr normalizatino
   {

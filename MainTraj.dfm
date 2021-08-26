@@ -22,7 +22,7 @@ object MainOpt: TMainOpt
     Top = 0
     Width = 872
     Height = 592
-    ActivePage = tsResult
+    ActivePage = tsInit
     Align = alClient
     TabOrder = 0
     object tsInit: TTabSheet
