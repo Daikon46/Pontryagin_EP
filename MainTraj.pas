@@ -53,9 +53,9 @@ type
     lblm0: TLabel;
     edtm0: TEdit;
     lblPr0: TLabel;
-    grpPr: TGroupBox;
-    rbPrNeg: TRadioButton;
-    rbPrPos: TRadioButton;
+    grpPm: TGroupBox;
+    rbPmNeg: TRadioButton;
+    rbPmPos: TRadioButton;
     lblPvr: TLabel;
     edtPvr: TEdit;
     lblPvu: TLabel;
@@ -90,13 +90,13 @@ type
     grpPontMemo: TGroupBox;
     grpCostate: TGroupBox;
     lblMemo: TLabel;
-    lbledtPm: TLabeledEdit;
+    lbledtPr: TLabeledEdit;
     lbledtPvrP: TLabeledEdit;
     lbledtPvuP: TLabeledEdit;
     grpError: TGroupBox;
-    lbledtPmE: TLabeledEdit;
-    lbledtPvrE: TLabeledEdit;
-    lbledtPvuE: TLabeledEdit;
+    lbledtFrE: TLabeledEdit;
+    lbledtFVrE: TLabeledEdit;
+    lbledtFVuE: TLabeledEdit;
     pnlPont: TPanel;
     edtc1: TEdit;
     lblCostate: TLabel;
@@ -130,7 +130,7 @@ type
     SavePictureDialog1: TSavePictureDialog;
     btnSwapInit: TButton;
     lblPm: TLabel;
-    edtPm: TEdit;
+    edtPr: TEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -192,14 +192,14 @@ var
   r0, u0, Vr0, Vu0, time0,      // initial system state
   Pr0, Pvr0, Pvu0, Pm0,         // initial costates value
   r_f, u_f, Vr_f, Vu_f,         // target system state
-  TF,                           // Final time
+  TF, delta, beta,               // Final time, EP switch (0 or 1) and mass ratio consumption
   c, ac                         // exhaust velocit and nominal acceleration
   : extended;
   t_b_r, t_r_b,
   V_b_r, V_r_b,
   a_b_r, a_r_b : extended;      // dimensionless transformation
   //переменные циклов
-  i_step : integer;
+  i_step, EP_switch : integer;
   //переменные для работы Ньютона
   Pontryagin : Boolean; // True - solve pontryagin; False - only integration
   x  : array [ 1..n ]         of float;  //
@@ -246,13 +246,17 @@ begin
   p0     := sma0*(1-sqr(ex0));
   r0     := p0 / (1+ex0*cos(u0-omega0));              // r, AU
   Vr0    := 1 / sqrt(p0) * ex0*sin(u0-omega0);        // Vr, dim
-  Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0)); //+ 8793*V_r_b;    // Vu, dim
+  Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0)) + 8000*V_r_b;    // Vu, dim
   Time0  := 0;                                    // Time, dim
+  // old code for Pr normalizatino
+  {
   if rbPrNeg.Checked then Pr0 := -1
   else Pr0 := 1;
+  }
+  Pm0   := -1;
   Pvr0  := StrToFloat(edtPvr.Text);
   Pvu0  := StrToFloat(edtPvu.Text);
-  Pm0   := StrToFloat(edtPm.Text);
+  Pr0   := StrToFloat(edtPr.Text);
 // target orbit data gathering
   exF    := StrToFloat(edteF.Text);
   omegaF := StrToFloat(edtOmegaF.Text) * PI/180;  // rad
@@ -260,9 +264,10 @@ begin
   pF     := smaF*(1-sqr(exF));
 // initial data for integration gathering
   i_step := 0;
-//  TF    := StrToFloat(edtTF.Text) * t_r_b;       // dim
+  TF    := StrToFloat(edtTF.Text) * t_r_b;       // dim
   ac    := StrToFloat(edtThrust.Text) / StrToFloat(edtm0.Text) * a_r_b; // dim
   c     := StrToFloat(edtSpImp.Text)*9.8 * V_r_b;  // dim
+  beta  := ac/c;
   hr[1] := StrToFloat(edth.Text) * t_r_b;
   hr[2] := 1E-8;
 // calculation for pure integration
@@ -281,8 +286,8 @@ begin
       yr[10]:= Pm0;             // Pm
     // set progress bar
       pbInteg.Position := 0;
-    //  pbInteg.Max := Trunc(TF / hr[1]); // old status bar for time
-      pbInteg.Max := Trunc(Pm0*1000);
+      pbInteg.Max := Trunc(TF / hr[1]); // for time Exit
+    //  pbInteg.Max := Trunc(Pm0*1000);   // Pm exit
     end
   else
 // calculation to solve boundary problem
@@ -310,7 +315,7 @@ begin
     begin
       rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
       FillGrid(i_step, MainOpt.strgrResults);
-      MainOpt.edtTF.Text := FloatToStrF(Results[i_step-1,1]*t_b_r, fffixed, 6,2);
+      // MainOpt.edtTF.Text := FloatToStrF(Results[i_step-1,1]*t_b_r, fffixed, 6,2);
       MainOpt.btnChartClick(WorkThread);
       if not Terminated then Synchronize(ShowStatus);
     end
@@ -318,7 +323,7 @@ begin
 
 //--------------------calculation process for boundary problem------------------
     begin
-      x[1]  := StrToFloat(MainOpt.lbledtPm.Text);     //Начальные значения сопряженных
+      x[1]  := StrToFloat(MainOpt.lbledtPr.Text);     //Начальные значения сопряженных
       x[2]  := StrToFloat(MainOpt.lbledtPvrP.Text);
       x[3]  := StrToFloat(MainOpt.lbledtPvuP.Text);
       y[1,1]:= StrToFloat(MainOpt.edtc1.Text);     //Весовой коэффициент по первой невязке
@@ -381,7 +386,7 @@ begin
       MainOpt.btnChartClick(WorkThread);
       MainOpt.edtPvr.Text := MainOpt.lbledtPvrP.Text;
       MainOpt.edtPvu.Text := MainOpt.lbledtPvuP.Text;
-      MainOpt.edtPm.Text  := MainOpt.lbledtPm.Text;
+      MainOpt.edtPr.Text  := MainOpt.lbledtPr.Text;
     end;
 
   MainOpt.btnInteg.Enabled := True;
@@ -419,10 +424,23 @@ begin
    Pvu   := y[8];
    mf    := y[9];
    Pm    := y[10];
-   lamb  := ArcTan2(Pvu, Pvr);
-   a     := ac/(1-y[9]);
-   S     := a*cos(lamb); // along Vr
-   T     := a*sin(lamb); // along Vu
+   delta := Pm/c + sqrt(sqr(Pvr)+sqr(Pvu))/(1-y[9]);
+   if delta < 0 then
+    begin
+      EP_switch := 0;
+      a         := 0;
+      lamb      := 0;
+      S         := 0;
+      T         := 0;
+    end
+   else
+    begin
+      EP_Switch := 1;
+      a         := ac/(1-y[9]);
+      lamb      := ArcTan2(Pvu, Pvr);
+      S         := a*cos(lamb); // along Vr
+      T         := a*sin(lamb); // along Vu
+    end;
 // Right part
    d[1]  := Vr;                                  // dr
    d[2]  := Vu/r;                                // du
@@ -434,8 +452,8 @@ begin
    d[7]  := - Pr + Pvu*Vu/r;                     // dPvr
    d[8]  := (Pvu*Vr - 2*Pvr*Vu) / r;             // dPvu
 // mass consumption
-   d[9]  := ac/c;                                // dm
-   d[10] := -(Pvr*S + Pvu*T);                    // dPm
+   d[9]  := beta*EP_Switch;                                // dm
+   d[10] := -(Pvr*S + Pvu*T)/(1-y[9]);                    // dPm
 end;
 
 // Output of the results
@@ -465,11 +483,12 @@ begin
    Results[i_step-1, 9] := lamb; // lambda
    for i := 10 to 11 do Results[i_step-1, i] := yr[i-1];  // mf, Pm
 // Check exit function
-//   fr[1] := yr[5] - TF; - old exit by time
-   fr[1] := yr[10]; // new exit by Pm = 0
+   fr[1] := yr[5] - TF; // exit by time
+   // fr[1] := yr[10];  // exit by Pm = 0
    if not Pontryagin then
     begin
-      MainOpt.pbInteg.Position := Trunc((Pm0 - yr[10])*1000);
+      MainOpt.pbInteg.Position := i_step;
+      //  MainOpt.pbInteg.Position := Trunc((Pm0 - yr[10])*1000); - for Pm bar
     // Check halt button click
       if WorkThread.Terminated then fr[1] := 0;
     end;
@@ -492,11 +511,11 @@ begin
   yr[3] := Vr0;             // Vr, dim
   yr[4] := Vu0;             // Vu, dim
   yr[5] := Time0;           // Time, dim
-  yr[6] := Pr0;
+  yr[6] := x[1];            // Pr0
   yr[7] := x[2];            // PVr0
   yr[8] := x[3];            // Pvu0
-  yr[9] := 0;             // fuel mass ratio, dim
-  yr[10] := x[1];           // Pm0
+  yr[9] := 0;               // fuel mass ratio, dim
+  yr[10]:= Pm0;             // Pm0
 
   rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
 
@@ -562,8 +581,9 @@ begin
    f_summ := y[1,1]*abs(f[1])+y[2,1]*abs(f[2])+y[3,1]*abs(f[3]);
    FillEdit;
    FillMemo;
-   MainOpt.edtTF.Text := FloatToStrF(Results[High(Results), 1]*t_b_r,
+   { MainOpt.edtTF.Text := FloatToStrF(Results[High(Results), 1]*t_b_r,
                                     fffixed, 14, 2);  // record flight duration
+   }
    for ii := 1 to n do for j := 1 to 4 do ym[(ii-1)*4+j] := y[ii,j];
    // Draw charts
    MainOpt.cht1.Series[0].AddXY(x[1], f_summ);
@@ -603,7 +623,7 @@ begin
       jj := j;
 
     // check for redundant rows and prevent writing them
-      if Results[j, 11] < 0 then
+      if (j <> k-1) and (Results[j+1, 1] < Results[j, 1]) then
         begin
             Grid.RowCount := j+2;
             jj := k-1;
@@ -626,7 +646,7 @@ begin
       for i := 10 to 11 do Grid.Cells[i, j+1] :=
                           floattostrF(Results[jj, i]           ,fffixed, 14, 12);  // mf, Pm
     // exit loop if check true
-      if Results[j, 11] < 0 then break;
+      if (j <> k-1) and (Results[j+1, 1] < Results[j, 1]) then break;
     end;
 end;
 
@@ -662,10 +682,10 @@ begin
   V_r_b  := 1/V_b_r;
   a_b_r  := mu / sqr(Rz);                           // from dimensionless to m/s2
   a_r_b  := 1/a_b_r;
-  rbPrPos.Checked:= True;
+  rbPmNeg.Checked:= True;
   edtPvr.Text    := FloatToStr(-0.0751);
   edtPvu.Text    := FloatToStr(1.1308);
-  edtPm.Text     := FloatToStr(1);
+  edtPr.Text     := FloatToStr(1);
   edtTF.Text     := FloatToStrf(132*t_b_r, ffFixed, 6, 2);   // days
   edth.Text      := FloatToStr(4);   // days
   lblh_br.Caption := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
@@ -691,7 +711,7 @@ begin
   strgrResults.Cells[10,0]      := 'mass_ratio';
   strgrResults.Cells[11,0]      := 'Pm';
   // Data for boundary problem solver
-  lbledtPm.Text    := edtPm.Text;
+  lbledtPr.Text    := edtPr.Text;
   lbledtPvrP.Text  := edtPvr.Text;
   lbledtPvuP.Text  := edtPvu.Text;
   edtac1.Text := FloatToStr(0.0001);
@@ -802,13 +822,14 @@ begin
             lbledtPvrP.Text  := edtPvr.Text;
           2 :
             lbledtPvuP.Text  := edtPvu.Text;
-
           3 :
-            lbledtPm.Text    := edtPm.Text;
-
+            lbledtPr.Text    := edtPr.Text;
           4 :
             lblh_br.Caption  := FloatToStrF(StrToFloat(edth.Text)*t_r_b,
-                                            fffixed, 3,5) + ' dimensionless';
+                                            fffixed, 3,4) + ' dimensionless';
+          5 :
+            lblTF_br.Caption := FloatToStrF(StrToFloat(edtTF.Text)*t_r_b,
+                                            fffixed, 3,4) + ' dimensionless';
         end;
       end
   except
@@ -942,12 +963,12 @@ end;
 
 procedure FillEdit;
 begin
-      MainOpt.lbledtPm.Text   := FloatToStr(x[1]);
+      MainOpt.lbledtPr.Text   := FloatToStr(x[1]);
       MainOpt.lbledtPvrP.Text := FloatToStr(x[2]);
       MainOpt.lbledtPvuP.Text := FloatToStr(x[3]);
-      MainOpt.lbledtPmE.Text  := FloatToStrF(f[1],fffixed, 14, 12);
-      MainOpt.lbledtPvrE.Text := FloatToStrF(f[2],fffixed, 14, 12);
-      MainOpt.lbledtPvuE.Text := FloatToStrF(f[3],fffixed, 14, 12);
+      MainOpt.lbledtFrE.Text  := FloatToStrF(f[1],fffixed, 14, 12);
+      MainOpt.lbledtFVrE.Text := FloatToStrF(f[2],fffixed, 14, 12);
+      MainOpt.lbledtFVuE.Text := FloatToStrF(f[3],fffixed, 14, 12);
 end;
 
 procedure FillMemo;
@@ -1033,7 +1054,7 @@ begin
        // String to identify correct file
        writeln(f, 'Initial Data:');
        // Write costate variables
-       writeln(f, lbledtPm.Text);
+       writeln(f, lbledtPr.Text);
        writeln(f, lbledtPvrP.Text);
        writeln(f, lbledtPvuP.Text);
        // Write initial orbit and SC position
@@ -1075,7 +1096,7 @@ begin
         begin
           // Read costate variables
           ReadLn(f, text);
-          lbledtPm.Text := text;
+          lbledtPr.Text := text;
           ReadLn(f, text);
           lbledtPvrP.Text := text;
           ReadLn(f, text);
@@ -1113,7 +1134,7 @@ begin
     end;
  edtPvu.Text := lbledtPvuP.Text;
  edtPvr.Text := lbledtPvrP.Text;
- edtPm.Text  := lbledtPm.Text;
+ edtPr.Text  := lbledtPr.Text;
 end;
 
 // Save results of integration (table of data)
