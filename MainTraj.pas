@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, StdCtrls, Buttons, ExtCtrls, TeeProcs, TeEngine, Chart,
-  Series, DBCtrls, Math, Grids, olmethod, Method, ExtDlgs;
+  Series, DBCtrls, Math, Grids, olmethod, Method, ExtDlgs, Menus;
 
 type
   TWorkThread = class(TThread)
@@ -54,8 +54,8 @@ type
     edtm0: TEdit;
     lblPr0: TLabel;
     grpPm: TGroupBox;
-    rbPmNeg: TRadioButton;
-    rbPmPos: TRadioButton;
+    rbPrNeg: TRadioButton;
+    rbPrPos: TRadioButton;
     lblPvr: TLabel;
     edtPvr: TEdit;
     lblPvu: TLabel;
@@ -131,6 +131,11 @@ type
     btnSwapInit: TButton;
     lblPm: TLabel;
     edtPr: TEdit;
+    mm1: TMainMenu;
+    MathModel1: TMenuItem;
+    M221: TMenuItem;
+    M23ConstantThrust1: TMenuItem;
+    M23FixedTime1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -149,6 +154,9 @@ type
     procedure btnSaveClick(Sender: TObject);
     procedure btnChSaveClick(Sender: TObject);
     procedure btnSwapInitClick(Sender: TObject);
+    procedure M221Click(Sender: TObject);
+    procedure M23FixedTime1Click(Sender: TObject);
+    procedure M23ConstantThrust1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -161,7 +169,9 @@ procedure FillEdit;
 procedure FillMemo;
 
 // Integration related
-Procedure PRfull (var y1, d1; n: word); far;
+Procedure PRfull_M4 (var y1, d1; n: word); far;
+Procedure PRfull_M3 (var y1, d1; n: word); far;
+Procedure PRfull_M2 (var y1, d1; n: word); far;
 procedure Sf_M_Min (var yr1, dr1; nr:  word;
                        var fr1;      mr:  word;
                        var hr1;      mr1: word;
@@ -198,6 +208,7 @@ var
   t_b_r, t_r_b,
   V_b_r, V_r_b,
   a_b_r, a_r_b : extended;      // dimensionless transformation
+  MathMode : Word;  // Flags math model switching
   //переменные циклов
   i_step, EP_switch : integer;
   //переменные для работы Ньютона
@@ -248,15 +259,26 @@ begin
   Vr0    := 1 / sqrt(p0) * ex0*sin(u0-omega0);        // Vr, dim
   Vu0    := 1 / sqrt(p0) * (1+ex0*cos(u0-omega0)); // + 8000*V_r_b;    // Vu, dim
   Time0  := 0;                                    // Time, dim
-  // old code for Pr normalizatino
-  {
-  if rbPrNeg.Checked then Pr0 := -1
-  else Pr0 := 1;
-  }
-  Pm0   := -1;
-  Pvr0  := StrToFloat(edtPvr.Text);
-  Pvu0  := StrToFloat(edtPvu.Text);
-  Pr0   := StrToFloat(edtPr.Text);
+
+  // Math Model
+  case MathMode of
+    2 : begin
+          Pm0 := 0;
+          if rbPrNeg.Checked then Pr0 := -1
+          else Pr0 := 1;
+        end;
+    3 : begin
+          Pm0 := StrToFloat(edtPr.Text); // Pr edit is used as Pm
+          if rbPrNeg.Checked then Pr0 := -1
+          else Pr0 := 1;
+        end;
+    4 : begin
+          Pm0 := -1;
+          Pr0 := StrToFloat(edtPr.Text);
+        end;
+  end;
+  Pvr0   := StrToFloat(edtPvr.Text);
+  Pvu0   := StrToFloat(edtPvu.Text);
 // target orbit data gathering
   exF    := StrToFloat(edteF.Text);
   omegaF := StrToFloat(edtOmegaF.Text) * PI/180;  // rad
@@ -264,12 +286,12 @@ begin
   pF     := smaF*(1-sqr(exF));
 // initial data for integration gathering
   i_step := 0;
-  TF    := StrToFloat(edtTF.Text) * t_r_b;       // dim
-  ac    := StrToFloat(edtThrust.Text) / StrToFloat(edtm0.Text) * a_r_b; // dim
-  c     := StrToFloat(edtSpImp.Text)*9.8 * V_r_b;  // dim
-  beta  := ac/c;
-  hr[1] := StrToFloat(edth.Text) * t_r_b;
-  hr[2] := 1E-8;
+  TF     := StrToFloat(edtTF.Text) * t_r_b;       // dim
+  ac     := StrToFloat(edtThrust.Text) / StrToFloat(edtm0.Text) * a_r_b; // dim
+  c      := StrToFloat(edtSpImp.Text)*9.8 * V_r_b;  // dim
+  beta   := ac/c;
+  hr[1]  := StrToFloat(edth.Text) * t_r_b;
+  hr[2]  := 1E-8;
 // calculation for pure integration
   if Sender = btnInteg then
     begin
@@ -286,8 +308,10 @@ begin
       yr[10]:= Pm0;             // Pm
     // set progress bar
       pbInteg.Position := 0;
-      pbInteg.Max := Trunc(TF / hr[1]); // for time Exit
-    //  pbInteg.Max := Trunc(Pm0*1000);   // Pm exit
+      if MathMode = 3 then
+        pbInteg.Max := Trunc(Pm0*1000)   // Pm exit
+      else
+        pbInteg.Max := Trunc(TF / hr[1]); // for time Exit
     end
   else
 // calculation to solve boundary problem
@@ -313,9 +337,20 @@ begin
 //---------------calculation process for pure integration-----------------------
   if not Pontryagin then
     begin
-      rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
+      case MathMode of
+        2 : begin
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M2, Sf_M_Min, zr, nzr, lr);
+            end;
+        3 : begin
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M3, Sf_M_Min, zr, nzr, lr);
+              MainOpt.edtTF.Text := FloatToStrF(Results[i_step-1,1]*t_b_r, fffixed, 6,2);
+            end;
+        4 : begin
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M4, Sf_M_Min, zr, nzr, lr);
+            end;
+      end;
+
       FillGrid(i_step, MainOpt.strgrResults);
-      // MainOpt.edtTF.Text := FloatToStrF(Results[i_step-1,1]*t_b_r, fffixed, 6,2);
       MainOpt.btnChartClick(WorkThread);
       if not Terminated then Synchronize(ShowStatus);
     end
@@ -402,7 +437,9 @@ end;
 //--------------Integration Related----------------------------------------
 
 // Right parts of the motion equiation system
-Procedure PRfull (var y1, d1; n: word); far;
+
+// Fixed Time
+Procedure PRfull_M4 (var y1, d1; n: word); far;
  { Пpавые части для межпланетных пеpелетов с полным набоpом
    фазовых кооpдинат, упpавлений и сопpяженных множителей.
    Интегpиpование по времени. }
@@ -456,6 +493,77 @@ begin
    d[10] := -(Pvr*S + Pvu*T)/(1-y[9]);                    // dPm
 end;
 
+// Constant Thrust
+Procedure PRfull_M3 (var y1, d1; n: word); far;
+
+Var
+     y: array[1..MaxNumVector] of float absolute y1;
+     d: array[1..MaxNumVector] of float absolute d1;
+     S, T : extended;  // acceleration components into orbit plane
+     a    : extended;  // current acceleration
+begin
+// Initiate system state
+   r     := y[1];
+   u     := y[2];
+   Vr    := y[3];
+   Vu    := y[4];
+   time  := y[5];
+   Pr    := y[6];
+   Pvr   := y[7];
+   Pvu   := y[8];
+   mf    := y[9];
+   Pm    := y[10];
+   lamb  := ArcTan2(Pvu, Pvr);
+   a     := ac/(1-y[9]);
+   S     := a*cos(lamb); // along Vr
+   T     := a*sin(lamb); // along Vu
+// Right part
+   d[1]  := Vr;                                  // dr
+   d[2]  := Vu/r;                                // du
+   d[3]  := Sqr(Vu)/r - 1/sqr(r) + S;            // dVr
+   d[4]  := -Vr*Vu/r + T;                        // dVu
+   d[5]  := 1;                                   // t
+   d[6]  := Pvr*(sqr(Vu/r) - 2/sqr(r)/r)
+              - Pvu*Vr*Vu/sqr(r);                // dPr
+   d[7]  := - Pr + Pvu*Vu/r;                     // dPvr
+   d[8]  := (Pvu*Vr - 2*Pvr*Vu) / r;             // dPvu
+// mass consumption
+   d[9]  := ac/c;                                // dm
+   d[10] := -(Pvr*S + Pvu*T);                    // dPm
+end;
+
+// Constant Thrust and Mass
+Procedure PRfull_M2 (var y1, d1; n: word); far;
+
+Var
+     y: array[1..MaxNumVector] of float absolute y1;
+     d: array[1..MaxNumVector] of float absolute d1;
+     S, T : extended;  // acceleration components into orbit plane
+begin
+// Initiate system state
+   r     := y[1];
+   u     := y[2];
+   Vr    := y[3];
+   Vu    := y[4];
+   time  := y[5];
+   Pr    := y[6];
+   Pvr   := y[7];
+   Pvu   := y[8];
+   lamb  := ArcTan2(Pvu, Pvr);
+   S     := ac*cos(lamb); // along Vr
+   T     := ac*sin(lamb); // along Vu
+// Right part
+   d[1]  := Vr;                                  // dr
+   d[2]  := Vu/r;                                // du
+   d[3]  := Sqr(Vu)/r - 1/sqr(r) + S;            // dVr
+   d[4]  := -Vr*Vu/r + T;                        // dVu
+   d[5]  := 1;                                   // t
+   d[6]  := Pvr*(sqr(Vu/r) - 2/sqr(r)/r)
+              - Pvu*Vr*Vu/sqr(r);                // dPr
+   d[7]  := - Pr + Pvu*Vu/r;                     // dPvr
+   d[8]  := (Pvu*Vr - 2*Pvr*Vu) / r;             // dPvu
+end;
+
 // Output of the results
 procedure Sf_M_Min (var yr1, dr1; nr:  word;
                        var fr1;      mr:  word;
@@ -482,9 +590,13 @@ begin
    for i := 6 to 8 do Results[i_step-1, i] := yr[i];   // Pr, Pvr, Pvu
    Results[i_step-1, 9] := lamb; // lambda
    for i := 10 to 11 do Results[i_step-1, i] := yr[i-1];  // mf, Pm
+
 // Check exit function
-   fr[1] := yr[5] - TF; // exit by time
-   // fr[1] := yr[10];  // exit by Pm = 0
+   if MathMode = 3 then
+    fr[1] := yr[10]  // exit by Pm = 0
+   else
+    fr[1] := yr[5] - TF; // exit by time
+
    if not Pontryagin then
     begin
       MainOpt.pbInteg.Position := i_step;
@@ -505,19 +617,49 @@ var x: array[1..MaxNumX] of float absolute xn;
 
 begin
   i_step:= 0;
-//  Tf    := x[1];   // old Tf determination
-  yr[1] := r0;              // r, AU
-  yr[2] := u0;              // rad
-  yr[3] := Vr0;             // Vr, dim
-  yr[4] := Vu0;             // Vu, dim
-  yr[5] := Time0;           // Time, dim
-  yr[6] := x[1];            // Pr0
-  yr[7] := x[2];            // PVr0
-  yr[8] := x[3];            // Pvu0
-  yr[9] := 0;               // fuel mass ratio, dim
-  yr[10]:= Pm0;             // Pm0
 
-  rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull, Sf_M_Min, zr, nzr, lr);
+      case MathMode of
+        2 : begin
+              Tf    := x[1];
+              yr[1] := r0;              // r, AU
+              yr[2] := u0;              // rad
+              yr[3] := Vr0;             // Vr, dim
+              yr[4] := Vu0;             // Vu, dim
+              yr[5] := Time0;           // Time, dim
+              yr[6] := Pr0;
+              yr[7] := x[2];
+              yr[8] := x[3];
+              yr[9] := 0;
+              yr[10]:= 0;
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M2, Sf_M_Min, zr, nzr, lr);
+            end;
+        3 : begin
+              yr[1] := r0;              // r, AU
+              yr[2] := u0;              // rad
+              yr[3] := Vr0;             // Vr, dim
+              yr[4] := Vu0;             // Vu, dim
+              yr[5] := Time0;           // Time, dim
+              yr[6] := Pr0;
+              yr[7] := x[2];            // PVr0
+              yr[8] := x[3];            // Pvu0
+              yr[9] := 0;             // fuel mass ratio, dim
+              yr[10] := x[1];           // Pm0
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M3, Sf_M_Min, zr, nzr, lr);
+            end;
+        4 : begin
+              yr[1] := r0;              // r, AU
+              yr[2] := u0;              // rad
+              yr[3] := Vr0;             // Vr, dim
+              yr[4] := Vu0;             // Vu, dim
+              yr[5] := Time0;           // Time, dim
+              yr[6] := x[1];            // Pr0
+              yr[7] := x[2];            // PVr0
+              yr[8] := x[3];            // Pvu0
+              yr[9] := 0;               // fuel mass ratio, dim
+              yr[10]:= Pm0;             // Pm0
+              rkdb (yr, dr, nr, fr, mr, hr, mr1, PRfull_M4, Sf_M_Min, zr, nzr, lr);
+            end;
+      end;
 
   u_f := Results[High(Results), 3];                  // u, rad
   r_f   := pF / (1+exF*cos(u_f - omegaF));              // r, AU
@@ -662,6 +804,8 @@ begin
   HorzScrollBar.Range := 870; // set the range to an higher number
   VertScrollBar.Range := 580; // set the range to an higher number
   ShowScrollBar(Handle, SB_BOTH, True);
+  // Math Mode init set for Fixed time
+  MathMode := 4;
   // input Initial Data
   edtOmega0.Text := FloatToStr(85.901);              // deg
   edte0.Text     := FloatToStr(0.0167086);
@@ -682,7 +826,7 @@ begin
   V_r_b  := 1/V_b_r;
   a_b_r  := mu / sqr(Rz);                           // from dimensionless to m/s2
   a_r_b  := 1/a_b_r;
-  rbPmNeg.Checked:= True;
+  rbPrNeg.Checked:= True;
   edtPvr.Text    := FloatToStr(-0.0751);
   edtPvu.Text    := FloatToStr(1.1308);
   edtPr.Text     := FloatToStr(1);
@@ -1198,6 +1342,48 @@ begin
   edtOmegaF.Text := argument;
   edteF.Text := eccent;
   edtsmaF.Text := smaxe;
+end;
+
+procedure TMainOpt.M221Click(Sender: TObject);
+begin
+  MathMode := 2;
+  edtSpImp.Enabled := False;
+  lblPr0.Hide;
+  edtPr.Hide;
+  lblPm.Caption := 'Costate variable of radi (Pr) ______________________';
+  rbPrNeg.Enabled := True;
+  rbPrPos.Enabled := True;
+  edtTF.Enabled := True;
+  lbledtPr.EditLabel.Caption := 'Time____';
+end;
+
+procedure TMainOpt.M23ConstantThrust1Click(Sender: TObject);
+begin
+  MathMode := 3;
+  edtSpImp.Enabled := True;
+  lblPr0.Show;
+  edtPr.Show;
+  lblPm.Caption := 'Costate variable of radi (Pr) ______________________';
+  rbPrNeg.Enabled := True;
+  rbPrPos.Enabled := True;
+  lblPr0.Caption := 'Costate variable of fuel mass ratio (Pm) ______';
+  edtTF.Enabled := False;
+  lbledtPr.EditLabel.Caption := 'Pm_____';
+end;
+
+procedure TMainOpt.M23FixedTime1Click(Sender: TObject);
+begin
+  MathMode := 4;
+  edtSpImp.Enabled := True;
+  lblPr0.Show;
+  edtPr.Show;
+  lblPm.Caption := 'Costate variable of fuel mass ratio (Pm) _______';
+  rbPrPos.Checked := True;
+  rbPrNeg.Enabled := False;
+  rbPrPos.Enabled := False;
+  lblPr0.Caption := 'Costate variable of radi (Pr) ______________________';
+  edtTF.Enabled := True;
+  lbledtPr.EditLabel.Caption := 'Pr_____';
 end;
 
 end.

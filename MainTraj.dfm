@@ -1,9 +1,9 @@
 object MainOpt: TMainOpt
-  Left = 363
-  Top = 223
+  Left = 301
+  Top = 183
   Width = 888
   Height = 631
-  Caption = 'Opt Trajectory NEP'
+  Caption = 'Opt Trajectory EP'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,6 +11,7 @@ object MainOpt: TMainOpt
   Font.Name = 'Tahoma'
   Font.Style = []
   KeyPreview = True
+  Menu = mm1
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
@@ -21,7 +22,7 @@ object MainOpt: TMainOpt
     Left = 0
     Top = 0
     Width = 872
-    Height = 592
+    Height = 572
     ActivePage = tsInit
     Align = alClient
     TabOrder = 0
@@ -482,7 +483,7 @@ object MainOpt: TMainOpt
           Width = 101
           Height = 35
           TabOrder = 2
-          object rbPmNeg: TRadioButton
+          object rbPrNeg: TRadioButton
             Left = 8
             Top = 12
             Width = 45
@@ -493,7 +494,7 @@ object MainOpt: TMainOpt
             TabOrder = 0
             TabStop = True
           end
-          object rbPmPos: TRadioButton
+          object rbPrPos: TRadioButton
             Left = 53
             Top = 12
             Width = 46
@@ -640,7 +641,7 @@ object MainOpt: TMainOpt
         Top = 24
         Width = 857
         Height = 529
-        ActivePage = tsCharts
+        ActivePage = tsTable
         Align = alCustom
         TabOrder = 1
         object tsTable: TTabSheet
@@ -1465,5 +1466,23 @@ object MainOpt: TMainOpt
   end
   object SavePictureDialog1: TSavePictureDialog
     Left = 656
+  end
+  object mm1: TMainMenu
+    Left = 584
+    object MathModel1: TMenuItem
+      Caption = 'Math Model'
+      object M221: TMenuItem
+        Caption = 'M_2_2_Constant Mass and Thrust'
+        OnClick = M221Click
+      end
+      object M23ConstantThrust1: TMenuItem
+        Caption = 'M_2_3_Constant Thrust'
+        OnClick = M23ConstantThrust1Click
+      end
+      object M23FixedTime1: TMenuItem
+        Caption = 'M_2_3_Fixed Time'
+        OnClick = M23FixedTime1Click
+      end
+    end
   end
 end
