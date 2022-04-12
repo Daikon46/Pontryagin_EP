@@ -1,8 +1,8 @@
 object MainOpt: TMainOpt
-  Left = 301
-  Top = 183
-  Width = 888
-  Height = 631
+  Left = 323
+  Top = 166
+  Width = 886
+  Height = 662
   Caption = 'Opt Trajectory EP'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -21,8 +21,8 @@ object MainOpt: TMainOpt
   object pgcMain: TPageControl
     Left = 0
     Top = 0
-    Width = 872
-    Height = 572
+    Width = 870
+    Height = 603
     ActivePage = tsInit
     Align = alClient
     TabOrder = 0
@@ -639,9 +639,9 @@ object MainOpt: TMainOpt
       object pgcResults: TPageControl
         Left = 0
         Top = 24
-        Width = 857
-        Height = 529
-        ActivePage = tsTable
+        Width = 865
+        Height = 553
+        ActivePage = tsCharts
         Align = alCustom
         TabOrder = 1
         object tsTable: TTabSheet
@@ -649,8 +649,8 @@ object MainOpt: TMainOpt
           object strgrResults: TStringGrid
             Left = 0
             Top = 0
-            Width = 849
-            Height = 501
+            Width = 857
+            Height = 525
             Align = alClient
             ColCount = 9
             DefaultColWidth = 90
@@ -1480,9 +1480,13 @@ object MainOpt: TMainOpt
         OnClick = M23ConstantThrust1Click
       end
       object M23FixedTime1: TMenuItem
-        Caption = 'M_2_3_Fixed Time'
+        Caption = 'M_2_4_Fixed Time'
         OnClick = M23FixedTime1Click
       end
+    end
+    object About1: TMenuItem
+      Caption = 'About'
+      OnClick = About1Click
     end
   end
 end

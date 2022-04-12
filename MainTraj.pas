@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, StdCtrls, Buttons, ExtCtrls, TeeProcs, TeEngine, Chart,
-  Series, DBCtrls, Math, Grids, olmethod, Method, ExtDlgs, Menus;
+  Series, DBCtrls, Math, Grids, olmethod, Method, ExtDlgs, Menus, About;
 
 type
   TWorkThread = class(TThread)
@@ -136,6 +136,7 @@ type
     M221: TMenuItem;
     M23ConstantThrust1: TMenuItem;
     M23FixedTime1: TMenuItem;
+    About1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -157,6 +158,7 @@ type
     procedure M221Click(Sender: TObject);
     procedure M23FixedTime1Click(Sender: TObject);
     procedure M23ConstantThrust1Click(Sender: TObject);
+    procedure About1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -1384,6 +1386,11 @@ begin
   lblPr0.Caption := 'Costate variable of radi (Pr) ______________________';
   edtTF.Enabled := True;
   lbledtPr.EditLabel.Caption := 'Pr_____';
+end;
+
+procedure TMainOpt.About1Click(Sender: TObject);
+begin
+  About.Form1.Show;
 end;
 
 end.
